@@ -1,0 +1,52 @@
+# ===== Unity standard =====
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]serSettings/
+[Mm]emoryCaptures/
+*.csproj
+*.sln
+*.user
+*.pidb
+*.pdb
+*.mdb
+*.booproj
+*.svd
+*.opendb
+*.VC.db
+.vs/
+.idea/
+.gradle/
+crashlytics-build.properties
+
+# ===== Third-party / licensed assets (not redistributable) =====
+Assets/Photon*
+Assets/Fusion*
+Assets/AutoHand/
+Assets/AutoHand.meta
+Assets/IronHeadVR/
+Assets/IronHeadVR.meta
+Assets/Flooded_Grounds/
+Assets/Flooded_Grounds.meta
+Assets/Zombie/
+Assets/Zombie.meta
+Assets/VR Body/
+Assets/VR Body.meta
+Assets/free horror ambience 2/
+Assets/free horror ambience 2.meta
+Assets/XR/
+Assets/XRI/
+Assets/Oculus/
+Assets/StreamingAssets/
+
+# ===== Dev-time editor tooling (references excluded packs) =====
+Assets/Scripts/Editor/
+Assets/Scripts/Editor.meta
+
+# Recovery backups (tooling artifacts)
+_Recovery/
+Assets/_Recovery/
+Assets/_Recovery.meta
