@@ -2195,6 +2195,8 @@ MonoBehaviour:
   body: {fileID: 5933852551334527938}
   headBodyPositionOffset: {x: 0, y: -1.55, z: 0}
   bodyRotateSmoothness: 0.1
+  eyeToHeadBoneOffset: 0.16
+  trackingHeightOffset: 0.5
 --- !u!114 &3573354196599582181
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2468,6 +2470,14 @@ PrefabInstance:
     - target: {fileID: 5855040603234790249, guid: c25e49e3c511fe2498b5f09a15b598ca, type: 3}
       propertyPath: m_LocalScale.z
       value: 0.001
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: c25e49e3c511fe2498b5f09a15b598ca, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 8c5b78d725758754b827faf5031f23cf, type: 2}
+    - target: {fileID: 5866666021909216657, guid: c25e49e3c511fe2498b5f09a15b598ca, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
