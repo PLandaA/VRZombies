@@ -37,7 +37,6 @@ public class AmmoSpawner : NetworkBehaviour
 
         CleanupEmptyMags();
         SpawnFreshMags();
-        Debug.Log("[AmmoSpawner] Intermission (wave " + nextWave + "): fresh magazines spawned.");
     }
 
     private void CleanupEmptyMags()
@@ -63,10 +62,23 @@ public class AmmoSpawner : NetworkBehaviour
             return;
         }
 
-        for (int i = 0; i < magsPerIntermission; i++)
+        int available = 0;
+        foreach (var ammo in FindObjectsByType<AutoAmmo>(FindObjectsSortMode.None))
+        {
+            if (ammo.currentAmmo <= 0) continue;
+            if (ammo.transform.parent != null) continue;
+            var grab = ammo.GetComponent<Grabbable>();
+            if (grab != null && grab.IsHeld()) continue;
+            if (ammo.GetComponent<NetworkObject>() == null) continue;
+            available++;
+        }
+
+        int toSpawn = Mathf.Max(0, magsPerIntermission - available);
+        for (int i = 0; i < toSpawn; i++)
         {
             var p = spawnPoints[i % spawnPoints.Length];
             Runner.Spawn(ammoPrefab, p.position, p.rotation);
         }
+        Debug.Log("[AmmoSpawner] Loose mags with ammo: " + available + " -> spawned " + toSpawn + " new.");
     }
 }

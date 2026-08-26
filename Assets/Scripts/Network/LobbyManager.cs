@@ -24,7 +24,7 @@ public class LobbyManager : MonoBehaviour
         var nm = NetworkManager.instance;
         if (nm == null || nm.runner == null || !nm.runner.IsRunning)
         {
-            SetText("Conectando...");
+        SetText("Connecting...");
             return;
         }
 
@@ -36,7 +36,22 @@ public class LobbyManager : MonoBehaviour
         if (playerCount < requiredPlayers)
         {
             _countdown = -1f;
-            SetText("ESPERANDO JUGADOR...\n(" + playerCount + "/" + requiredPlayers + ")");
+        SetText("WAITING FOR PLAYER...\n(" + playerCount + "/" + requiredPlayers + ")");
+            return;
+        }
+
+        // Gate: every connected player must have finished the lobby tutorial
+        int tutorialDone = 0;
+        foreach (var p in runner.ActivePlayers)
+        {
+            var np = nm.GetPlayer(p);
+            if (np != null && np.Object != null && np.Object.IsValid && np.TutorialDone)
+                tutorialDone++;
+        }
+        if (tutorialDone < playerCount)
+        {
+            _countdown = -1f;
+            SetText("COMPLETE THE TUTORIAL!\n(" + tutorialDone + "/" + playerCount + " ready)");
             return;
         }
 
@@ -47,11 +62,11 @@ public class LobbyManager : MonoBehaviour
 
         if (_countdown > 0f)
         {
-            SetText("JUGADOR CONECTADO!\nIniciando en " + Mathf.CeilToInt(_countdown) + "...");
+        SetText("PLAYER CONNECTED!\nStarting in " + Mathf.CeilToInt(_countdown) + "...");
         }
         else if (!_loading)
         {
-            SetText("CARGANDO PARTIDA...");
+        SetText("LOADING GAME...");
             if (runner.IsSharedModeMasterClient)
             {
                 _loading = true;

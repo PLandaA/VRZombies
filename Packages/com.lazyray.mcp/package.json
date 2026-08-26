@@ -1,0 +1,19 @@
+{
+    "name": "com.lazyray.mcp",
+    "version": "1.11.0",
+    "displayName": "LazyRay MCP",
+    "description": "Bridge between Claude AI and Unity Editor via Model Context Protocol (MCP). Enables Claude to read, edit, and manage Unity projects through named pipes.",
+    "unity": "6000.3",
+    "author": {
+        "name": "VML",
+        "url": ""
+    },
+    "keywords": [
+        "AI",
+        "Claude",
+        "MCP",
+        "editor",
+        "tools"
+    ],
+    "type": "tool"
+}

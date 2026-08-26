@@ -64,7 +64,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         var args = new StartGameArgs()
         {
             GameMode = GameMode.Shared,
-            SessionName = "Test",
+            PlayerCount = 2,
             Scene = SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex),
             SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
         };
@@ -132,7 +132,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             if (sp2 != null) list.Add(sp2);
             if (list.Count == 0)
             {
-                Debug.LogWarning("[NetworkManager] No PlayerSpawnPoints encontrados.");
+            Debug.Log("[NetworkManager] No PlayerSpawnPoints found (expected in lobby; players spawn at default position).");
                 return;
             }
             spawnPoints = list.ToArray();
@@ -144,7 +144,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             idx = Mathf.Abs(runner.LocalPlayer.PlayerId) % spawnPoints.Length;
         var sp = spawnPoints[idx];
 
-        var rig = FindObjectOfType<HardwareRig>();
+        var rig = FindFirstObjectByType<HardwareRig>();
         if (rig == null) { Debug.LogWarning("[NetworkManager] HardwareRig no encontrado."); return; }
 
         rig.transform.position = sp.transform.position;

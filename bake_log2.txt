@@ -1,0 +1,620 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.3/staging' branch; Version is '6000.3.14f1 (d68c3f99a318) revision 14060607'; Using compiler version '194234433'; Build Type 'Release'
+[Licensing::IpcConnector] Channel LicenseClient-pland doesn't exist
+OS: 'Windows 11  (10.0.26200) Professional' Language: 'es' Physical Memory: 32694 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-08-13T02:26:01Z
+[Licensing::Module] Successfully launched the LicensingClient (PId: 17612)
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.3.14f1\Editor\Unity.exe
+-projectPath
+C:\Unity Projects\VRZombies
+-batchmode
+-executeMethod
+BatchBake.Run
+-logFile
+C:\Unity Projects\VRZombies\bake_log2.txt
+Successfully changed project path to: C:\Unity Projects\VRZombies
+C:/Unity Projects/VRZombies
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+Player connection [31576]  Target information:
+
+Player connection [31576]  * "[IP] 192.168.68.109 [Port] 55504 [Flags] 2 [Guid] 2438410528 [EditorId] 2438410528 [Version] 1048832 [Id] WindowsEditor(7,PatosPC) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [31576] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [31576] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-pland" at "2026-08-13T02:26:01.9835048Z"
+[Package Manager] Connected to IPC stream "Upm-416" after 0.4 seconds.
+[Licensing::Module] Licensing is not yet initialized.
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.1+9fbee8e
+  Session Id:              849c20b0901f43e988b1a0bd38c957aa
+  Correlation Id:          39dbd37545ae491788f5ac7cb42b9df2
+  External correlation Id: 5288460719813084927
+  Machine Id:              RMlpdyKlhQNpD/MWGRTJL7BZW3U=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-pland" (connect: 0.37s, validation: 0.07s, handshake: 1.12s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-pland-notifications" at "2026-08-13T02:26:03.1706886Z"
+[Licensing::Module] Connected to LicensingClient (PId: 17612, launch time: 0.01, total connection time: 1.56s)
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: F4-HSMA-YKZ7-WHDJ-XPS3-XXXX
+  Product: Unity Personal
+  Type: ULF
+  Expiration: Unlimited
+[Licensing::Module] License group:
+  Id: 4672970727119-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.01
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: F4-HSMA-YKZ7-WHDJ-XPS3-XXXX
+  Product: Unity Personal
+  Type: ULF
+  Expiration: Unlimited
+[Licensing::Module] License group:
+  Id: 4672970727119-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Module] Licensing Background thread has ended after 1.60s
+[Licensing::Module] Licensing is initialized (took 1.02s).
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: F4-HSMA-YKZ7-WHDJ-XPS3-XXXX
+  Product: Unity Personal
+  Type: ULF
+  Expiration: Unlimited
+[Licensing::Module] License group:
+  Id: 4672970727119-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+Library Redirect Path: Library/
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Artifact Garbage Collection - Removed 3 unused hashed content files
+Refreshing native plugins compatible for Editor in 11.79 ms, found 2 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 6000.3.14f1 (d68c3f99a318)
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.3.14f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path C:/Unity Projects/VRZombies/Assets
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.1]
+    Renderer: AMD Radeon RX 6700 XT (ID=0x73df)
+    Vendor:   ATI
+    VRAM:     12242 MB
+    Driver:   32.0.21045.1000
+Initialize mono
+Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.3.14f1/Editor/Data/Managed'
+Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.3.14f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.3.14f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56416
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.3.14f1/Editor/Data/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.3.14f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.004942 seconds.
+- Loaded All Assemblies, in  0.490 seconds
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Package Manager log level set to [2]
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.440 seconds
+Domain Reload Profiling: 922ms
+	BeginReloadAssembly (169ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (0ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (10ms)
+	RebuildCommonClasses (42ms)
+	RebuildNativeTypeToScriptingClass (13ms)
+	initialDomainReloadingComplete (65ms)
+	LoadAllAssembliesAndSetupDomain (192ms)
+		LoadAssemblies (152ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (188ms)
+			TypeCache.Refresh (187ms)
+				TypeCache.ScanAssembly (172ms)
+			BuildScriptInfoCaches (0ms)
+			ResolveRequiredComponents (0ms)
+	FinalizeReload (440ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (398ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (64ms)
+			SetLoadedEditorAssemblies (4ms)
+			BeforeProcessingInitializeOnLoad (87ms)
+			ProcessInitializeOnLoadAttributes (150ms)
+			ProcessInitializeOnLoadMethodAttributes (92ms)
+			AfterProcessingInitializeOnLoad (0ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (0ms)
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: F4-HSMA-YKZ7-WHDJ-XPS3-XXXX
+  Product: Unity Personal
+  Type: ULF
+  Expiration: Unlimited
+[Licensing::Module] License group:
+  Id: 4672970727119-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+Application.AssetDatabase Initial Refresh Start
+[Package Manager] Restoring resolved packages state from cache
+[Licensing::Client] Successfully resolved entitlement details
+[Package Manager] Registered 72 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.ai.navigation@2.0.12 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.ai.navigation@734c2c4c5591)
+    com.unity.animation.rigging@1.4.1 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.animation.rigging@ae5f251e1ed4)
+    com.unity.cinemachine@3.1.7 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.cinemachine@f3f96bcb59af)
+    com.unity.collab-proxy@2.12.4 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.collab-proxy@0b1559bcd34e)
+    com.unity.ide.rider@3.0.39 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.ide.rider@4504839d03f7)
+    com.unity.ide.visualstudio@2.0.26 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.ide.visualstudio@a99d56dec63f)
+    com.unity.inputsystem@1.19.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.inputsystem@21a28c3a6c83)
+    com.unity.nuget.mono-cecil@1.11.6 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.nuget.mono-cecil@ecb9724e46ff)
+    com.unity.probuilder@6.1.2 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.probuilder@8be9724b2335)
+    com.unity.timeline@1.8.12 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.timeline@8cd8509afae5)
+    com.unity.visualscripting@1.9.11 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.visualscripting@8bed5ad90189)
+    com.unity.xr.hands@1.7.3 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.xr.hands@3e241be20642)
+    com.unity.xr.interaction.toolkit@3.3.1 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.xr.interaction.toolkit@5f736ad4ccd8)
+    com.unity.xr.management@4.5.4 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.xr.management@e3a3882b360a)
+    com.unity.xr.openxr@1.16.1 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.xr.openxr@ef0033a586bf)
+    com.unity.xr.core-utils@2.5.3 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.xr.core-utils@f0450cbac8d6)
+    com.unity.xr.legacyinputhelpers@2.1.13 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.xr.legacyinputhelpers@9535ff2c27ac)
+    com.unity.mathematics@1.3.3 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.mathematics@19a9377c4ffa)
+    com.unity.settings-manager@2.1.1 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.settings-manager@0b8638c5ce86)
+    com.unity.splines@2.8.4 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.splines@9b00833aca09)
+    com.unity.burst@1.8.29 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.burst@6bb9aca3ef38)
+    com.unity.nuget.newtonsoft-json@3.2.2 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.nuget.newtonsoft-json@4dfd81071c64)
+    com.unity.collections@2.6.5 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.collections@12999e356c23)
+    com.unity.searcher@4.9.4 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.searcher@d45a78918735)
+    com.unity.test-framework.performance@3.4.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.test-framework.performance@aa81a99c4a75)
+  Built-in packages:
+    com.unity.multiplayer.center@1.0.1 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.multiplayer.center@f01f4ba8d00a)
+    com.unity.render-pipelines.universal@17.3.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.render-pipelines.universal@3b809f23691d)
+    com.unity.test-framework@1.6.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.test-framework@aebcb98460c6)
+    com.unity.ugui@2.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.ugui@8ccc29d23a79)
+    com.unity.visualeffectgraph@17.3.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.visualeffectgraph@9ffede663017)
+    com.unity.modules.accessibility@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.accessibility)
+    com.unity.modules.adaptiveperformance@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.adaptiveperformance)
+    com.unity.modules.ai@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.ai)
+    com.unity.modules.androidjni@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.androidjni)
+    com.unity.modules.animation@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.animation)
+    com.unity.modules.assetbundle@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.assetbundle)
+    com.unity.modules.audio@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.audio)
+    com.unity.modules.cloth@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.cloth)
+    com.unity.modules.director@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.director)
+    com.unity.modules.imageconversion@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.imageconversion)
+    com.unity.modules.imgui@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.imgui)
+    com.unity.modules.jsonserialize@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.jsonserialize)
+    com.unity.modules.particlesystem@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.particlesystem)
+    com.unity.modules.physics@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.physics)
+    com.unity.modules.physics2d@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.physics2d)
+    com.unity.modules.screencapture@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.screencapture)
+    com.unity.modules.terrain@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.terrain)
+    com.unity.modules.terrainphysics@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.terrainphysics)
+    com.unity.modules.tilemap@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.tilemap)
+    com.unity.modules.ui@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.ui)
+    com.unity.modules.uielements@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.uielements)
+    com.unity.modules.umbra@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.umbra)
+    com.unity.modules.unityanalytics@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.unityanalytics)
+    com.unity.modules.unitywebrequest@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.unitywebrequest)
+    com.unity.modules.unitywebrequestassetbundle@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.unitywebrequestassetbundle)
+    com.unity.modules.unitywebrequestaudio@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.unitywebrequestaudio)
+    com.unity.modules.unitywebrequesttexture@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.unitywebrequesttexture)
+    com.unity.modules.unitywebrequestwww@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.unitywebrequestwww)
+    com.unity.modules.vectorgraphics@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.vectorgraphics)
+    com.unity.modules.vehicles@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.vehicles)
+    com.unity.modules.video@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.video)
+    com.unity.modules.vr@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.vr)
+    com.unity.modules.wind@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.wind)
+    com.unity.modules.xr@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.xr)
+    com.unity.modules.subsystems@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.subsystems)
+    com.unity.modules.hierarchycore@1.0.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.modules.hierarchycore)
+    com.unity.shadergraph@17.3.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.shadergraph@28ee1cc75774)
+    com.unity.render-pipelines.core@17.3.0 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.render-pipelines.core@02dfbe8e43de)
+    com.unity.ext.nunit@2.0.5 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.ext.nunit@d8c07649098d)
+    com.unity.render-pipelines.universal-config@17.0.3 (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.render-pipelines.universal-config@8dc1aab4af1d)
+  Embedded packages:
+    com.lazyray.mcp@file:C:\Unity Projects\VRZombies\Packages\com.lazyray.mcp (location: C:\Unity Projects\VRZombies\Packages\com.lazyray.mcp)
+  Git packages:
+    com.coplaydev.unity-mcp@https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main (location: C:\Unity Projects\VRZombies\Library\PackageCache\com.coplaydev.unity-mcp@8bd91ce7bd3a)
+[Subsystems] Looking for new subsystems at path C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.xr.openxr@ef0033a586bf
+[Subsystems] Novel subsystem found at Library/PackageCache/com.unity.xr.openxr@ef0033a586bf/Runtime/UnitySubsystemsManifest.json
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.3.14f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path C:/Unity Projects/VRZombies/Assets
+[Subsystems] Discovering subsystems at path C:\Unity Projects\VRZombies\Library\PackageCache\com.unity.xr.openxr@ef0033a586bf
+[Subsystems] No descriptors matched for  examples in Library/PackageCache/com.unity.xr.openxr@ef0033a586bf/Runtime/UnitySubsystemsManifest.json.
+[Subsystems] 1 'inputs' descriptors matched in Library/PackageCache/com.unity.xr.openxr@ef0033a586bf/Runtime/UnitySubsystemsManifest.json
+[Subsystems] 1 'displays' descriptors matched in Library/PackageCache/com.unity.xr.openxr@ef0033a586bf/Runtime/UnitySubsystemsManifest.json
+[Subsystems] No descriptors matched for  meshings in Library/PackageCache/com.unity.xr.openxr@ef0033a586bf/Runtime/UnitySubsystemsManifest.json.
+[Package Manager] Done registering packages in 0.04 seconds
+Assembly reference Packages/com.unity.cinemachine/Editor/Samples/ExposeHDRPInternals/HDRP-Editor-ref.asmref has no target assembly definition
+Assembly reference Packages/com.unity.cinemachine/Editor/Samples/ExposeHDRPInternals/HDRP-Editor-ref.asmref has no target assembly definition
+Starting: C:\Program Files\Unity\Hub\Editor\6000.3.14f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: C:/Unity Projects/VRZombies
+DisplayProgressbar: Compiling Scripts
+Starting: C:\Program Files\Unity\Hub\Editor\6000.3.14f1\Editor\Data\netcorerun\netcorerun.exe "C:\Program Files\Unity\Hub\Editor\6000.3.14f1\Editor\Data\Tools\BuildPipeline\ScriptCompilationBuildProgram.exe" "Library/Bee/1900b0aE.dag.json" "Library/Bee/1900b0aE-inputdata.json" "Library\Bee\buildprogram0.traceevents"
+WorkingDir: C:/Unity Projects/VRZombies
+ExitCode: 4 Duration: 0s379ms
+Rebuilding DAG because FileSignature timestamp changed: Library/Bee/1900b0aE-inputdata.json
+*** Tundra requires additional run (0.30 seconds), 0 items updated, 824 evaluated
+ExitCode: 0 Duration: 1s432ms
+Starting: C:\Program Files\Unity\Hub\Editor\6000.3.14f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --dagfilejson="Library\Bee\1900b0aE.dag.json" --profile="Library/Bee/backend2.traceevents" ScriptAssemblies
+WorkingDir: C:/Unity Projects/VRZombies
+ExitCode: 0 Duration: 1s177ms
+Finished compiling graph: 1573 nodes, 33470 flattened edges (26642 ToBuild, 266 ToUse), maximum node priority 1887
+[1190/1569  0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+*** Tundra build success (1.11 seconds), 1 items updated, 1569 evaluated
+AssetDatabase: script compilation time: 3.690325s
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  1.590 seconds
+'Assets/Photon/Fusion/Runtime/Fusion.Unity.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Assets/Photon/Fusion/Runtime/Fusion.Unity.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Packages/com.unity.cinemachine/Editor/Editors/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Packages/com.unity.cinemachine/Editor/Obsolete/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+Refreshing native plugins compatible for Editor in 25.63 ms, found 13 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Assembly reference Packages/com.unity.cinemachine/Editor/Samples/ExposeHDRPInternals/HDRP-Editor-ref.asmref has no target assembly definition
+Refreshing native plugins compatible for Editor in 25.42 ms, found 13 plugins.
+[LazyRay] MCP Server started (pipe: unity-mcp-416)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+LazyRay.Core.McpHttpServer:StartServer () (at ./Packages/com.lazyray.mcp/Editor/Core/McpHttpServer.cs:196)
+LazyRay.Core.McpHttpServer:TryStartImmediate () (at ./Packages/com.lazyray.mcp/Editor/Core/McpHttpServer.cs:108)
+LazyRay.Core.McpHttpServer:.cctor () (at ./Packages/com.lazyray.mcp/Editor/Core/McpHttpServer.cs:95)
+System.Runtime.CompilerServices.RuntimeHelpers:RunClassConstructor (System.RuntimeTypeHandle)
+UnityEditor.EditorAssemblies:ProcessInitializeOnLoadAttributes (System.Type[])
+
+(Filename: ./Packages/com.lazyray.mcp/Editor/Core/McpHttpServer.cs Line: 196)
+
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+[MODES] Loading mode Default (0) for mode-current-id-VRSurvivalZombies
+<RI> Initializing input.
+Using Windows.Gaming.Input
+Found 0 scene poses
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+Autohand.AutoHandUpdateDataWizard:FindScenePoses () (at Assets/AutoHand/Scripts/Editor/AutoHandUpdateDataWizard.cs:244)
+Autohand.AutoHandUpdateDataWizard:CheckSceneForOldPoses () (at Assets/AutoHand/Scripts/Editor/AutoHandUpdateDataWizard.cs:54)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+UnityEditor.EditorAssemblies:ProcessInitializeOnLoadMethodAttributes ()
+
+(Filename: Assets/AutoHand/Scripts/Editor/AutoHandUpdateDataWizard.cs Line: 244)
+
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  8.104 seconds
+Domain Reload Profiling: 9674ms
+	BeginReloadAssembly (347ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (28ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (151ms)
+	RebuildCommonClasses (40ms)
+	RebuildNativeTypeToScriptingClass (14ms)
+	initialDomainReloadingComplete (54ms)
+	LoadAllAssembliesAndSetupDomain (1116ms)
+		LoadAssemblies (707ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (533ms)
+			TypeCache.Refresh (391ms)
+				TypeCache.ScanAssembly (370ms)
+			BuildScriptInfoCaches (111ms)
+			ResolveRequiredComponents (26ms)
+	FinalizeReload (8104ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (7633ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (34ms)
+			SetLoadedEditorAssemblies (4ms)
+			BeforeProcessingInitializeOnLoad (250ms)
+			ProcessInitializeOnLoadAttributes (6801ms)
+			ProcessInitializeOnLoadMethodAttributes (522ms)
+			AfterProcessingInitializeOnLoad (21ms)
+			EditorAssembliesLoaded (1ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (28ms)
+Start importing Packages/com.unity.render-pipelines.core/Tests/Editor/UnifiedRayTracing/TraceRays.urtshader using Guid(1142bbad8b9e8c44c83a9775ff120d37) (ScriptedImporter)Launched and connected shader compiler UnityShaderCompiler.exe after 0.03 seconds
+
+Compiling Ray Tracing Shader "TraceRays.urtshader", keywords = <no keywords>
+    finished in 0.13 seconds. Local cache hits 0, remote cache hits 0, compiled 1 platform variants
+ -> (artifact id: '711be5bd2aec212bc7f52fe41408d171') in 0.2122798 seconds
+Start importing Packages/com.unity.render-pipelines.universal/Runtime/RendererFeatures/SurfaceCacheGI/SurfaceCacheCore/RisEstimation.urtshader using Guid(713f6141bd66a134383b787f2eaa7c11) (ScriptedImporter)
+Compiling Ray Tracing Shader "RisEstimation.urtshader", keywords = <no keywords>
+    finished in 0.11 seconds. Local cache hits 0, remote cache hits 0, compiled 1 platform variants
+ -> (artifact id: '138b6ddd809598ee99efeedbba515d5d') in 0.1378976 seconds
+Start importing Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/RenderingLayerMask/TraceRenderingLayerMask.urtshader using Guid(94a070d33e408384bafc1dea4a565df9) (ScriptedImporter)
+Compiling Ray Tracing Shader "TraceRenderingLayerMask.urtshader", keywords = <no keywords>
+    finished in 0.10 seconds. Local cache hits 0, remote cache hits 0, compiled 1 platform variants
+ -> (artifact id: 'ae9ed0d17c428fa5d475a19beb4b638b') in 0.1199683 seconds
+Start importing Packages/com.unity.render-pipelines.universal/Runtime/RendererFeatures/SurfaceCacheGI/SurfaceCacheCore/UniformEstimation.urtshader using Guid(94a39d12848d8d64ca962a72b74e7c50) (ScriptedImporter)
+Compiling Ray Tracing Shader "UniformEstimation.urtshader", keywords = <no keywords>
+    finished in 0.10 seconds. Local cache hits 0, remote cache hits 0, compiled 1 platform variants
+ -> (artifact id: 'd3dc4aa72a88bdf174f365f7399c830a') in 0.1196913 seconds
+Start importing Packages/com.unity.render-pipelines.core/Tests/Editor/UnifiedRayTracing/TraceTransparentRays.urtshader using Guid(6513c3b892e933c4f8d00c19d5c47532) (ScriptedImporter)
+Compiling Ray Tracing Shader "TraceTransparentRays.urtshader", keywords = <no keywords>
+    finished in 0.01 seconds. Local cache hits 0, remote cache hits 0, compiled 1 platform variants
+ -> (artifact id: '134aed3489688c5d7443737a8b82ef4a') in 0.0221692 seconds
+Start importing Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/DynamicGI/DynamicGISkyOcclusion.urtshader using Guid(5a2a534753fbdb44e96c3c78b5a6999d) (ScriptedImporter)
+Compiling Ray Tracing Shader "DynamicGISkyOcclusion.urtshader", keywords = <no keywords>
+    finished in 0.09 seconds. Local cache hits 0, remote cache hits 0, compiled 1 platform variants
+ -> (artifact id: '3304725932783239d2b74bd62ca6b8f7') in 0.1041772 seconds
+Start importing Packages/com.unity.render-pipelines.core/Tests/Editor/UnifiedRayTracing/TraceRaysAndFetchAttributes.urtshader using Guid(fbc59f55df2416344b008dc23753cae2) (ScriptedImporter)
+Compiling Ray Tracing Shader "TraceRaysAndFetchAttributes.urtshader", keywords = <no keywords>
+    finished in 0.03 seconds. Local cache hits 0, remote cache hits 0, compiled 1 platform variants
+ -> (artifact id: '67e914a91375aed09bcd09d6732c8b3c') in 0.042629 seconds
+Start importing Packages/com.unity.render-pipelines.universal/Runtime/RendererFeatures/SurfaceCacheGI/SurfaceCacheCore/RestirCandidateTemporal.urtshader using Guid(ad3a9f9982f8c4f4a839a78955e78458) (ScriptedImporter)
+Compiling Ray Tracing Shader "RestirCandidateTemporal.urtshader", keywords = <no keywords>
+    finished in 0.12 seconds. Local cache hits 0, remote cache hits 0, compiled 1 platform variants
+ -> (artifact id: '9c5f82b1bec7d1e113aa7d907a3587c5') in 0.1317146 seconds
+Start importing Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/VirtualOffset/TraceVirtualOffset.urtshader using Guid(ff2cbab5da58bf04d82c5f34037ed123) (ScriptedImporter)
+Compiling Ray Tracing Shader "TraceVirtualOffset.urtshader", keywords = <no keywords>
+    finished in 0.10 seconds. Local cache hits 0, remote cache hits 0, compiled 1 platform variants
+ -> (artifact id: '6a26cbc95662ba5a0a572b51348960cd') in 0.1174618 seconds
+Refreshing native plugins compatible for Editor in 28.46 ms, found 13 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=7e9907c1a2607934b88e0f75db1f91b5): Total: 15.918 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	Summary:
+		Imports: total=9 (actual=9, local cache=0, cache server=0)
+		Asset DB Process Time: managed=3 ms, native=10085 ms
+		Asset DB Callback time: managed=290 ms, native=117 ms
+		Scripting: domain reloads=1, domain reload time=1591 ms, compile time=3692 ms, other=137 ms
+		Project Asset Count: scripts=2816, non-scripts=6518
+		Asset File Changes: new=0, changed=0, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokeCustomDependenciesCallbacks: 0.002ms
+	InvokePackagesCallback: 48.922ms
+	ApplyChangesToAssetFolders: 1.149ms
+	Scan: 216.353ms
+	OnSourceAssetsModified: 0.005ms
+	CategorizeAssetsWithTransientArtifact: 110.071ms
+	ProcessAssetsWithTransientArtifactChanges: 160.038ms
+	CategorizeAssets: 107.452ms
+	ImportOutOfDateAssets: 9201.985ms (4485.089ms without children)
+		ImportManagerImport: 1019.887ms (4.011ms without children)
+			ImportInProcess: 1015.256ms
+			UpdateCategorizedAssets: 0.621ms
+		CompileScripts: 3691.709ms
+		ReloadNativeAssets: 0.041ms
+		UnloadImportedAssets: 1.970ms
+		ReloadImportedAssets: 1.439ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 1.308ms
+		InitializingProgressBar: 0.009ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.000ms
+		OnDemandSchedulerStart: 0.533ms
+	PostProcessAllAssets: 333.658ms
+	Hotreload: 30.844ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.002ms
+	UnloadStreamsBegin: 1.456ms
+	PersistCurrentRevisions: 0.471ms
+	UnloadStreamsEnd: 0.001ms
+	GenerateScriptTypeHashes: 10.480ms
+	Untracked: 5705.724ms
+
+Application.AssetDatabase Initial Refresh End
+Shader 'MoreMountains/MMRipple': fallback shader 'Particle/AlphaBlended' not found
+Shader 'MoreMountains/MMRipple': fallback shader 'Particle/AlphaBlended' not found
+Scanning for USB devices : 3.043ms
+Initializing Unity extensions:
+Unloading 143 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 10910 unused Assets / (35.5 MB). Loaded Objects now: 11618.
+Memory consumption went from 368.9 MB to 333.4 MB.
+Total: 28.854400 ms (FindLiveObjects: 1.003300 ms CreateObjectMapping: 1.326100 ms MarkObjects: 13.879000 ms  DeleteObjects: 12.645100 ms)
+
+Opening scene 'Assets/Scenes/GameScene.unity'
+Unloading 60 Unused Serialized files (Serialized files now loaded: 0)
+LightingSettings: switching bake backend from 2 to 1.
+Loaded scene 'Assets/Scenes/GameScene.unity'
+	Deserialize:            4758.298 ms
+	Integration:            624.680 ms
+	Integration of assets:  13.917 ms
+	Thread Wait Time:       -0.262 ms
+	Total Operation Time:   5396.633 ms
+Unloading 8 unused Assets / (6.3 MB). Loaded Objects now: 17849.
+Memory consumption went from 0.63 GB to 0.63 GB.
+Total: 16.078200 ms (FindLiveObjects: 1.135800 ms CreateObjectMapping: 0.623300 ms MarkObjects: 14.150100 ms  DeleteObjects: 0.168200 ms)
+
+DisplayProgressbar: Baking Adaptive Probe Volumes
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.02 seconds
+Created GICache directory at C:/Users/pland/AppData/LocalLow/Unity/Caches/GiCache. Took: 0.035s, timestamps: [25.775 - 25.809]
+[00:00:05] Precompute started.
+[BakePipeline::Driver] Extracted OOTS snapshot with 378 instances, 319 geometries, 72 meshes, 20 materials, 9 lights, 0 cookies in 217.93ms.
+[BakePipeline::Driver] Transformed OOTS snapshot into LightBaker scene input (000001C3C43FE2F0) in 736.50ms. Size: 33.45MB.
+[BakePipeline::PreprocessStage] Background thread started.
+[00:00:06] Builtin Sky manager started.
+[00:00:06] Finished 1 Layout Systems job (0.04s execute, 0.00s integrate, 0.99s wallclock)
+[00:00:06] Finished 1 Bake Ambient Probe job (0.00s execute, 0.00s integrate, 0.02s wallclock)
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.02 seconds
+[00:00:07] Finished 1 Tetrahedralize Probes job (0.00s execute, 0.00s integrate, 0.44s wallclock)
+[00:00:07] Precompute took 1.436318 seconds.
+Enlighten scene contents:   0 geometries.   0 instances.   0 systems.   0 probe groups.   0 cube maps. Scene is up-to-date.
+[PathTracer] Finished packing lightmaps in 0.500651 seconds.
+[BakePipeline::BakeStage] Background thread started. Calling LightBaker.
+Starting cubemap convolution for '' (size 128)
+...took 0.056 seconds
+[PathTracer] Loaded OpenRL shaders in 0.719 secs -> Timestamps: [27.795 - 28.514].
+Progress timing - render light probes	6528.88	24883200	8054735814
+TrimDiskCacheJob: Current cache size 3557mb
+[BakePipeline::BakeStage] LightBaker bake took 83513.76ms and succeeded.
+[BakePipeline::PostProcessStage] Started.
+[BakePipeline::PostProcessStage] wrote post processed L2 SH coefficients for 243 light probe positions to Temp/PostProcessingOutput/probeRequest0/irradiance.shl2.
+[BakePipeline::PostProcessStage] wrote occlusion values for 243 light probe positions to Temp/PostProcessingOutput/probeRequest0/occlusion.occ.
+[BakePipeline::Run] Completed succesfully.
+[00:01:36] LightingDataAsset started.
+Start importing Assets/Scenes/GameScene/Lightmap-3_comp_light.exr using Guid(506225ef99da1204fa0207884ea4893b) (TextureImporter) -> (artifact id: '3a883986e14212e596b2c20df536572e') in 0.0219354 seconds
+Start importing Assets/Scenes/GameScene/Lightmap-1_comp_light.exr using Guid(f170f2bc4763a1940b3ad52296f76173) (TextureImporter) -> (artifact id: 'f45be37f8e0e3658b13ab8573b7c8a13') in 0.0061777 seconds
+Start importing Assets/Scenes/GameScene/Lightmap-1_comp_dir.png using Guid(55cf119eb8aa30f4fba76f259fabe598) (TextureImporter) -> (artifact id: '8d41ca40d6a7eff268c556d6578d449a') in 0.0046228 seconds
+Start importing Assets/Scenes/GameScene/Lightmap-2_comp_dir.png using Guid(850989a04e9a3c0468f3f55ad3c43fb3) (TextureImporter) -> (artifact id: '421bcf040ec2e9b28a29d6b6ba42be31') in 0.0048862 seconds
+Start importing Assets/Scenes/GameScene/Lightmap-2_comp_light.exr using Guid(16fc6aa789ed17b45a7f444bf4dfa6fb) (TextureImporter) -> (artifact id: 'e15664863c4e244570c81267ef3cbe48') in 0.0060932 seconds
+Start importing Assets/Scenes/GameScene/Lightmap-3_comp_dir.png using Guid(fa0554a963eec4a41a560c69a6effd1f) (TextureImporter) -> (artifact id: '1c8d5827a35cd7a776fdf4e5196073fe') in 0.0045826 seconds
+Start importing Assets/Scenes/GameScene/Lightmap-0_comp_dir.png using Guid(3d197fdd566543446a2ed6f419a3a394) (TextureImporter) -> (artifact id: 'a851bd7d3f2eac53c8fe29567c454dba') in 0.0050196 seconds
+Start importing Assets/Scenes/GameScene/Lightmap-0_comp_light.exr using Guid(8dba3d3088b74234fb273626e0f32d99) (TextureImporter) -> (artifact id: '7f46a84e9dd6953b874b9b123daed7f7') in 0.0064834 seconds
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: F4-HSMA-YKZ7-WHDJ-XPS3-XXXX
+  Product: Unity Personal
+  Type: ULF
+  Expiration: Unlimited
+[Licensing::Module] License group:
+  Id: 4672970727119-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+Refreshing native plugins compatible for Editor in 24.36 ms, found 13 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=91a428bfc551ec64ba039b7242caa274): Total: 0.271 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Start importing Assets/Scenes/GameScene/Lightmap-3_comp_light.exr using Guid(506225ef99da1204fa0207884ea4893b) (TextureImporter) -> (artifact id: 'f06ff9753ae54a3dedb808b2b3f96335') in 0.0929754 seconds
+Start importing Assets/Scenes/GameScene/Lightmap-1_comp_light.exr using Guid(f170f2bc4763a1940b3ad52296f76173) (TextureImporter) -> (artifact id: '1d368c4decd29c9ec63e39bfda316dba') in 0.1132108 seconds
+Start importing Assets/Scenes/GameScene/Lightmap-1_comp_dir.png using Guid(55cf119eb8aa30f4fba76f259fabe598) (TextureImporter) -> (artifact id: 'dc92899452aa34afef6f1033603a8793') in 0.0481079 seconds
+Start importing Assets/Scenes/GameScene/Lightmap-2_comp_dir.png using Guid(850989a04e9a3c0468f3f55ad3c43fb3) (TextureImporter) -> (artifact id: 'f4a928aa3af4c0d5b2f962b92ac06081') in 0.0423281 seconds
+Start importing Assets/Scenes/GameScene/Lightmap-2_comp_light.exr using Guid(16fc6aa789ed17b45a7f444bf4dfa6fb) (TextureImporter) -> (artifact id: 'bfd6afb4df258d24cc15ea747c11546b') in 0.1022053 seconds
+Start importing Assets/Scenes/GameScene/Lightmap-3_comp_dir.png using Guid(fa0554a963eec4a41a560c69a6effd1f) (TextureImporter) -> (artifact id: 'c1b7b9ba18950bae9c2867a5e75d07e2') in 0.0255869 seconds
+Start importing Assets/Scenes/GameScene/Lightmap-0_comp_dir.png using Guid(3d197fdd566543446a2ed6f419a3a394) (TextureImporter) -> (artifact id: 'fe29abe187408124e17ddcaac7092565') in 0.1505333 seconds
+Start importing Assets/Scenes/GameScene/Lightmap-0_comp_light.exr using Guid(8dba3d3088b74234fb273626e0f32d99) (TextureImporter) -> (artifact id: '659a0f49a9c0f6490b7982127b9d042a') in 0.3960767 seconds
+Refreshing native plugins compatible for Editor in 25.62 ms, found 13 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=b71e31bed3b012441929f22103dfc1bd): Total: 1.108 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+	Summary:
+		Imports: total=8 (actual=8, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=1069 ms
+		Asset DB Callback time: managed=3 ms, native=33 ms
+		Scripting: domain reloads=0, domain reload time=0 ms, compile time=0 ms, other=0 ms
+		Project Asset Count: scripts=2816, non-scripts=6526
+		Asset File Changes: new=0, changed=16, moved=0, deleted=0
+		Scan Filter Count: 11
+	InvokeCustomDependenciesCallbacks: 0.001ms
+	InvokePackagesCallback: 0.001ms
+	ApplyChangesToAssetFolders: 0.205ms
+	Scan: 26.231ms
+	OnSourceAssetsModified: 0.116ms
+	CategorizeAssetsWithTransientArtifact: 0.026ms
+	ProcessAssetsWithTransientArtifactChanges: 0.093ms
+	CategorizeAssets: 44.194ms
+	ImportOutOfDateAssets: 984.983ms (-2.274ms without children)
+		ImportManagerImport: 982.550ms (3.739ms without children)
+			ImportInProcess: 978.683ms
+			UpdateCategorizedAssets: 0.128ms
+		ReloadNativeAssets: 0.080ms
+		UnloadImportedAssets: 0.421ms
+		ReloadImportedAssets: 2.810ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.931ms
+		InitializingProgressBar: 0.007ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.001ms
+		OnDemandSchedulerStart: 0.457ms
+	PostProcessAllAssets: 9.961ms
+	Hotreload: 26.873ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.283ms
+	UnloadStreamsBegin: 0.229ms
+	PersistCurrentRevisions: 0.477ms
+	UnloadStreamsEnd: 0.001ms
+	Untracked: 14.070ms
+
+Asset Pipeline Refresh (id=995120db03e016646bd97bd03f772cbc): Total: 0.001 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Start importing Assets/Scenes/GameScene/ReflectionProbe-0.exr using Guid(95d0bbe363726ed44926fdbe6aa01ae5) (TextureImporter) -> (artifact id: 'd6f388d9ae733e7dd1ee99f9c58b5231') in 0.0066732 seconds
+Refreshing native plugins compatible for Editor in 24.94 ms, found 13 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=7261539ab88afa64a8dc20d87fb87ad6): Total: 0.087 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Start importing Assets/Scenes/GameScene/ReflectionProbe-0.exr using Guid(95d0bbe363726ed44926fdbe6aa01ae5) (TextureImporter)Starting cubemap convolution for '' (size 128)
+...took 0.052 seconds
+ -> (artifact id: 'ff6bb43642091dcabef0391c7165a986') in 0.1431656 seconds
+Refreshing native plugins compatible for Editor in 24.81 ms, found 13 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=64c47c54140bc2e4782bda66b75011e3): Total: 0.256 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+> Collecting Enlighten data
+Start importing Assets/Scenes/GameScene/LightingData.asset using Guid(64160d86d5515bc418201de8d325034d) (NativeFormatImporter) -> (artifact id: 'b5bdd72b391b7e22a3edd5f4b6d99e2d') in 0.0029535 seconds
+Refreshing native plugins compatible for Editor in 24.48 ms, found 13 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=0a78066120ce2b44482e7dee63b3fe95): Total: 0.080 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Start importing ProjectSettings/ProjectSettings.asset using Guid(00000000000000004000000000000000) (LibraryAssetImporter) -> (artifact id: '6b6ff46784a2c712e9908c6982697290') in 0.0028028 seconds
+Refreshing native plugins compatible for Editor in 25.36 ms, found 13 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=e02c58878d00d1c42bc5741f77cf3064): Total: 0.060 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Start importing Assets/Scenes/GameScene.unity using Guid(9fc0d4010bbf28b4594072e72b8655ab) (DefaultImporter) -> (artifact id: '31422c1de6e78d42b8020a550823d99f') in 0.0012836 seconds
+Refreshing native plugins compatible for Editor in 25.15 ms, found 13 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=7fad3f981da81b94888c8f55b15ce26c): Total: 0.079 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+[Licensing::IpcConnector] LicenseClient-pland-notifications channel disconnected successfully.
+[Licensing::IpcConnector] LicenseClient-pland channel disconnected successfully.
+AcceleratorClientConnectionCallback - disconnected - :0
+Cleanup mono
+20:28:01.849 |V| RiderPlugin                    | :1                             | AppDomain.CurrentDomain.DomainUnload lifetimeDefinition.Terminate
+Checking for leaked weakptr:
+  Found no leaked weakptrs.
+[Package Manager] Server process was shutdown
+##utp:{"type":"MemoryLeaks","version":2,"phase":"Immediate","time":1786588082098,"processId":416,"allocatedMemory":21527122,"memoryLabels":[{"Default":29313},{"Permanent":15236},{"NewDelete":68243},{"Thread":4230344},{"Manager":822157},{"VertexData":584},{"Geometry":816},{"Texture":38512},{"Shader":81461},{"Material":24},{"GfxDevice":56297},{"Animation":392},{"Audio":3040},{"FreeType":8},{"FontEngine":736},{"Physics":2090},{"Physics2D":16},{"Serialization":592},{"Input":14984},{"JobScheduler":33024},{"TextLib":216},{"Mono":32},{"MonoCode":64},{"ScriptingNativeRuntime":155060},{"BaseObject":1620272},{"Resource":1336},{"Renderer":3000},{"Transform":4685},{"File":12704},{"WebCam":616},{"Culling":32},{"Terrain":11394},{"Wind":24},{"STL":40},{"String":18741},{"DynamicArray":229562},{"HashMap":84228},{"Utility":2660822},{"Curl":2559},{"PoolAlloc":2248},{"AI":80},{"TypeTree":5341},{"ScriptManager":512},{"RuntimeInitializeOnLoadManager":64},{"SpriteAtlas":112},{"GI":7792},{"Director":8240},{"CloudService":9072},{"WebRequest":7577},{"VR":48138},{"SceneManager":504},{"Video":64},{"LazyScriptCache":32},{"Camera":17},{"Secure":2113},{"SerializationCache":1576},{"APIUpdating":10320},{"Subsystems":192},{"VirtualTexturing":57888},{"StaticSafetyDebugInfo":278528},{"Analytics":384},{"Hierarchy":608},{"CoreStats":13032},{"Identifiers":12960},{"Gui":96},{"EditorUtility":958414},{"VersionControl":4},{"Undo":947},{"AssetDatabase":9809075},{"EditorGi":328},{"ProgressiveLightmapper":42352},{"UnityConnect":29208},{"Upm":1896},{"AssetCompliance":64},{"DrivenProperties":72},{"LocalIPC":211},{"ProfilerEditor":9746},{"CoreBusinessMetrics":2867},{"Licensing":1232},{"AssetReference":32},{"IPCStream":32}]}

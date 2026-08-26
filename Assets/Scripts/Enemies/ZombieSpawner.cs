@@ -42,6 +42,9 @@ public class ZombieSpawner : NetworkBehaviour
     [Networked, OnChangedRender(nameof(OnIntermissionChanged))]
     public NetworkBool IsIntermission { get; private set; }
 
+    [Networked]
+    public NetworkBool GameOver { get; private set; }
+
     [Networked, OnChangedRender(nameof(OnWaitingChanged))]
     public NetworkBool WaitingForPlayers { get; private set; }
 
@@ -66,7 +69,23 @@ public class ZombieSpawner : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
-        if (!Object.HasStateAuthority) return;
+        if (Object.HasStateAuthority && !GameOver && CurrentWave > 0)
+        {
+            bool anyAlive = false;
+            bool anyPlayer = false;
+            foreach (var p in FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None))
+            {
+                if (p.Object == null || !p.Object.IsValid) continue;
+                anyPlayer = true;
+                if (!p.IsDead) { anyAlive = true; break; }
+            }
+            if (anyPlayer && !anyAlive)
+            {
+                GameOver = true;
+                Debug.Log("[Waves] GAME OVER - all players dead.");
+            }
+        }
+        if (GameOver) return;
 
         if (WaitingForPlayers)
         {

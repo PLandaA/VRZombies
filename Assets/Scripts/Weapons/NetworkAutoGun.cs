@@ -25,6 +25,8 @@ public class NetworkAutoGun : NetworkBehaviour
     private AutoGunEffects _effects;
     private Grabbable _grabbable;
     private ChangeDetector _changes;
+    private WeaponFeel _feel;
+    private BulletTracer _tracer;
 
     public int GetNetworkedAmmo() => NetworkedAmmo;
 
@@ -33,6 +35,16 @@ public class NetworkAutoGun : NetworkBehaviour
         _gun = GetComponent<AutoGun>();
         _effects = GetComponent<AutoGunEffects>();
         _grabbable = GetComponent<Grabbable>();
+        _feel = GetComponent<WeaponFeel>();
+        _tracer = GetComponent<BulletTracer>();
+
+        // Self-wire: the serialized slideTransform historically pointed at the rifle root,
+        // which made the remote slide-lerp fight the root NetworkRigidbody3D. Find the real slide.
+        if (slideTransform == null || slideTransform == transform.root)
+        {
+            foreach (var t in transform.root.GetComponentsInChildren<Transform>(true))
+                if (t.name.Trim().StartsWith("Slide")) { slideTransform = t; break; }
+        }
     }
 
     public override void Spawned()
@@ -189,11 +201,23 @@ public class NetworkAutoGun : NetworkBehaviour
     {
         if (hit.collider == null) return;
 
+        // Tracer: muzzle -> impact point (local shooter's view)
+        if (_tracer != null && _gun != null && _gun.shootForward != null)
+            _tracer.Fire(_gun.shootForward.position, hit.point);
+
         NetworkZombie zombie = hit.collider.GetComponentInParent<NetworkZombie>();
         if (zombie != null && zombie.State != NetworkZombie.ZombieState.Dead)
         {
-            Debug.Log("[NetGun] Hit zombie: " + zombie.name + " damage=" + bulletDamage);
-            zombie.RPC_TakeDamage(bulletDamage);
+            // Geometric headshot: distance from impact point to the head bone. (The old trigger
+            // sphere approach was invisible to AutoGun's ray: QueryTriggerInteraction.Ignore.)
+            bool headshot = zombie.HeadBone != null &&
+                Vector3.Distance(hit.point, zombie.HeadBone.position) < 0.3f;
+            int dmg = headshot ? bulletDamage * 2 : bulletDamage;
+            bool killingBlow = zombie.Health <= dmg;   // predicted from replicated health
+            Debug.Log("[NetGun] Hit zombie: " + zombie.name + " damage=" + dmg + (headshot ? " HEADSHOT" : ""));
+            zombie.RPC_TakeDamage(dmg, headshot);
+            if (_feel != null) _feel.PlayHitmarker(headshot);
+            if (killingBlow) ScoreEvents.RegisterKill(headshot, zombie.transform.position);
         }
     }
 
@@ -205,6 +229,12 @@ public class NetworkAutoGun : NetworkBehaviour
 
     private void PlayRemoteShootEffects()
     {
+        if (_feel != null) _feel.PlayShotVisuals();
+
+        // Remote tracer: straight ray from the muzzle (we don't know the exact hit point)
+        if (_tracer != null && _gun != null && _gun.shootForward != null)
+            _tracer.Fire(_gun.shootForward.position, _gun.shootForward.position + _gun.shootForward.forward * 30f);
+
         if (_effects == null) return;
         if (_effects.shootSound != null && _effects.shootSound.clip != null)
             _effects.shootSound.PlayOneShot(_effects.shootSound.clip);

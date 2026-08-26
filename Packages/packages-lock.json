@@ -15,7 +15,13 @@
         "com.unity.nuget.newtonsoft-json": "3.0.2",
         "com.unity.test-framework": "1.1.31"
       },
-      "hash": "11836003a5e2ffcb7715ecec7e1fbb9d9cdb5bb8"
+      "hash": "4ce7dd3cc54e37e2ed6dc59cb5a047f3dccb3f50"
+    },
+    "com.lazyray.mcp": {
+      "version": "file:com.lazyray.mcp",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
     },
     "com.unity.ai.navigation": {
       "version": "2.0.12",

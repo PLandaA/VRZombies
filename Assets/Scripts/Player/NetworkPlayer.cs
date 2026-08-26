@@ -6,7 +6,12 @@ using UnityEngine.Events;
 public class NetworkPlayer : NetworkBehaviour
 {
     [Networked] public int TotalScore { get; set; }
+    [Networked] public int Kills { get; set; }
+    [Networked] public int HeadshotKills { get; set; }
     [Networked] public NetworkBool Ready { get; set; }
+
+    /// Set by the local client (state authority over its own player) when it finishes the lobby tutorial.
+    [Networked] public NetworkBool TutorialDone { get; set; }
 
     [Header("Health")]
     [SerializeField] private int maxHealth = 100;
@@ -24,7 +29,13 @@ public class NetworkPlayer : NetworkBehaviour
 
     public override void Spawned()
     {
-        NetworkManager.instance.AddPlayer(Runner.LocalPlayer, this);
+        // Register under the ACTUAL owner of this player object. Runner.LocalPlayer here was a
+        // critical bug: every remote player's object registered under the LOCAL ref, corrupting
+        // the registry on every client (GetPlayer(remoteRef) == null forever).
+        var owner = Object.StateAuthority != PlayerRef.None ? Object.StateAuthority
+                  : (Object.InputAuthority != PlayerRef.None ? Object.InputAuthority : Runner.LocalPlayer);
+        NetworkManager.instance.AddPlayer(owner, this);
+
         if (Object.HasStateAuthority)
         {
             Health = maxHealth;

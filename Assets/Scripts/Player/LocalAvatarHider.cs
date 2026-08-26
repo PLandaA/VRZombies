@@ -1,7 +1,9 @@
 using UnityEngine;
 using Fusion;
 
-/// Hides the avatar's own head bone for the local player (standard VR first-person trick).
+/// Hides the avatar's own head and hand bones for the LOCAL player (standard VR first-person
+/// trick): you see your AutoHand physical hands instead, while REMOTE players see the avatar's
+/// full body including its hands following the replicated IK targets.
 public class LocalAvatarHider : NetworkBehaviour
 {
     public override void Spawned()
@@ -38,5 +40,19 @@ public class LocalAvatarHider : NetworkBehaviour
         {
             Debug.LogWarning("[LocalAvatarHider] Head bone not found.");
         }
+
+        // Hide the avatar's own hands too: locally your AutoHand hands ARE your hands;
+        // the avatar's copies would double up. Remote players still see them.
+        int hiddenHands = 0;
+        foreach (var t in GetComponentsInChildren<Transform>(true))
+        {
+            if (t.name.EndsWith(":RightHand") || t.name.EndsWith(":LeftHand"))
+            {
+                t.localScale = Vector3.one * 0.001f;
+                hiddenHands++;
+            }
+        }
+        Debug.Log("[LocalAvatarHider] Own avatar hands hidden: " + hiddenHands);
     }
 }
+

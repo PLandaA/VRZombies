@@ -33,14 +33,31 @@ Assets/Flooded_Grounds/
 Assets/Flooded_Grounds.meta
 Assets/Zombie/
 Assets/Zombie.meta
+Assets/AllSkyFree/
+Assets/AllSkyFree.meta
+Assets/Abandoned buildings/
+Assets/Abandoned buildings.meta
+Assets/AudioEffects/
+Assets/AudioEffects.meta
 Assets/VR Body/
 Assets/VR Body.meta
 Assets/free horror ambience 2/
 Assets/free horror ambience 2.meta
+Assets/Feel/
+Assets/Feel.meta
 Assets/XR/
 Assets/XRI/
 Assets/Oculus/
 Assets/StreamingAssets/
+
+# ===== Assistant scratch / diagnostics =====
+Assets/LazyRayData/
+Assets/LazyRayData.meta
+
+# ===== Build outputs =====
+*.apk
+*.aab
+ExportedObj/
 
 # ===== Dev-time editor tooling (references excluded packs) =====
 Assets/Scripts/Editor/

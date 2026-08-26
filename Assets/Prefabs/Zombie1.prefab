@@ -413,6 +413,72 @@ Transform:
   m_Children: []
   m_Father: {fileID: 55136041078773669}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1400809218601363253
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2391363690194858731}
+  - component: {fileID: 2618504590527643069}
+  - component: {fileID: 7383015033911068801}
+  m_Layer: 0
+  m_Name: HeadshotHitbox
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2391363690194858731
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1400809218601363253}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8195457672599474506}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &2618504590527643069
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1400809218601363253}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.16
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &7383015033911068801
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1400809218601363253}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cabbf5104c8c3eb47a8cf5ea85e3fd0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HeadshotHitbox
 --- !u!1 &1439322468301247014
 GameObject:
   m_ObjectHideFlags: 0
@@ -672,6 +738,7 @@ Transform:
   - {fileID: 6531877577849988540}
   - {fileID: 3908521375782837321}
   - {fileID: 6823160596983528529}
+  - {fileID: 2391363690194858731}
   m_Father: {fileID: 8804205604038411060}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1918587762329072105
@@ -1784,6 +1851,8 @@ GameObject:
   - component: {fileID: 6876694319111907893}
   - component: {fileID: 3352627376667483931}
   - component: {fileID: 2264200160811368440}
+  - component: {fileID: 1187242552109752774}
+  - component: {fileID: 7974184553998197263}
   m_Layer: 0
   m_Name: Zombie1
   m_TagString: Untagged
@@ -1977,7 +2046,42 @@ MonoBehaviour:
   dieParam: Die
   _Health: 0
   _State: 0
+  _DiedByHeadshot:
+    _value: 0
   _AnimSpeed: 0
+  deathSounds:
+  - {fileID: 8300000, guid: 413b2f21c20ff1f44931a4b30fd05c49, type: 3}
+  - {fileID: 8300000, guid: 954704c9af764534daabe0514e23d2fa, type: 3}
+  - {fileID: 8300000, guid: db3d88ff94abede4f8541050d80583c7, type: 3}
+  - {fileID: 8300000, guid: 2dc37da3aff308849a63f3971b06a325, type: 3}
+  - {fileID: 8300000, guid: e4c6ada3a61a7d34c9f68da3d764f6d6, type: 3}
+  - {fileID: 8300000, guid: 861a0fec97546e448973734a1d9850d8, type: 3}
+  - {fileID: 8300000, guid: 1068f6e968cdee54aae2860cae8bffd7, type: 3}
+  - {fileID: 8300000, guid: 334766f490f841846917a0df20d75cb1, type: 3}
+  - {fileID: 8300000, guid: 8efee7396898e774bb517f07e7475f96, type: 3}
+  - {fileID: 8300000, guid: 784310f3a4f8722418d784d5381a6afe, type: 3}
+  - {fileID: 8300000, guid: 5eb7fec159fb461429f45d7c6f56f86a, type: 3}
+  - {fileID: 8300000, guid: 47e6e342918c2f84fba2084f20a545d1, type: 3}
+  - {fileID: 8300000, guid: 5d2bffd2d970d1842a4ea8234ddf5f12, type: 3}
+  - {fileID: 8300000, guid: 613c39f04308aa4469b22d159139f8f5, type: 3}
+  - {fileID: 8300000, guid: 02dbbd55320b5f8438a92693e7c39f97, type: 3}
+  - {fileID: 8300000, guid: a55fc97814856b041b2a45f8a3cdce01, type: 3}
+  - {fileID: 8300000, guid: 7d14e5c7a28638c40bfc3c4344d7931a, type: 3}
+  - {fileID: 8300000, guid: ca27b49f38f5f224e88940ea6e6b5435, type: 3}
+  - {fileID: 8300000, guid: 5d45afc5330dc284eb0f8fee3a6b5b59, type: 3}
+  - {fileID: 8300000, guid: 642adac2c6426ed4ea9691af52e77160, type: 3}
+  - {fileID: 8300000, guid: 13ebd3a80e0a64c4f8bc45291249ef37, type: 3}
+  - {fileID: 8300000, guid: 3b92bab947f418c409aa492c916404de, type: 3}
+  - {fileID: 8300000, guid: 3d78c9e511f3ee44bbe9d9730985a601, type: 3}
+  - {fileID: 8300000, guid: 85313b3572991344d89a54f847c266b4, type: 3}
+  - {fileID: 8300000, guid: 4b1f92b403af97c4199203d26e62a457, type: 3}
+  - {fileID: 8300000, guid: 6220b382d45e49a48b1d922565c51500, type: 3}
+  - {fileID: 8300000, guid: abf84c0ee3cbcbc40a059af158a7e175, type: 3}
+  - {fileID: 8300000, guid: 500eab93770e3914abe264745836c42f, type: 3}
+  - {fileID: 8300000, guid: a20d0e3350bb34045ab8315dd186b0d0, type: 3}
+  - {fileID: 8300000, guid: 423087c7cdeeb17429206819522f150f, type: 3}
+  - {fileID: 8300000, guid: 9589788a54786ae4aad69b0df5791996, type: 3}
+  walkSound: {fileID: 8300000, guid: 216f6498494c44c468408269665f0f98, type: 3}
 --- !u!114 &2264200160811368440
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1992,6 +2096,39 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ZombieHitFlash
   flashDuration: 0.2
   flashColor: {r: 1, g: 0.15, b: 0.15, a: 1}
+--- !u!114 &1187242552109752774
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4493914613880827488}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 472fd9d9f679d3642a0236c2e3162961, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZombieFeel
+  hitPlayerOverride: {fileID: 0}
+  deathPlayerOverride: {fileID: 0}
+  hitPunch: 1.09
+  hitDuration: 0.12
+  deathPunch: 1.16
+  deathDuration: 0.25
+--- !u!114 &7974184553998197263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4493914613880827488}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0e8f4897e81cbc4d942b1d5c445cbc6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZombieJuice
+  killPoints: 10
+  headshotPoints: 25
+  bloodColor: {r: 0.45, g: 0.03, b: 0.03, a: 0.9}
 --- !u!1 &4710940672626480558
 GameObject:
   m_ObjectHideFlags: 0
