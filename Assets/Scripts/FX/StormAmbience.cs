@@ -44,7 +44,6 @@ public class StormAmbience : MonoBehaviour
         while (true)
         {
             yield return new WaitForSeconds(Random.Range(intervalRange.x, intervalRange.y));
-            Debug.Log("[Storm] Lightning strike");
             yield return Flash(0.22f);
             yield return new WaitForSeconds(0.09f);
             yield return Flash(0.5f);   // classic double-strike, long enough to catch mid-combat

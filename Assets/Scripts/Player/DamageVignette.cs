@@ -31,6 +31,17 @@ public class DamageVignette : MonoBehaviour
     private NetworkPlayer _localPlayer;
     private AutoHandPlayer _rig;
 
+    [Header("Directional Hit Indicator")]
+    [Tooltip("Peak alpha of the arc that points at whoever just hit you")]
+    [SerializeField] private float dirMaxAlpha = 0.7f;
+    [SerializeField] private float dirFadeTime = 1.1f;
+
+    private Image _dirImage;
+    private Transform _head;
+    private Vector3 _attackerPos;
+    private float _dirPulse;
+    private bool _subscribed;
+
     private void Start()
     {
         StartCoroutine(BuildWhenReady());
@@ -73,6 +84,60 @@ public class DamageVignette : MonoBehaviour
             new Rect(0, 0, 256, 256), new Vector2(0.5f, 0.5f));
         _image.color = new Color(vignetteColor.r, vignetteColor.g, vignetteColor.b, 0f);
         _image.raycastTarget = false;
+
+        // Directional arc: same canvas, rotated each frame to point at the attacker
+        _head = head;
+        var dirGo = new GameObject("HitDirection");
+        dirGo.transform.SetParent(canvasGo.transform, false);
+        _dirImage = dirGo.AddComponent<Image>();
+        var dirRt = _dirImage.rectTransform;
+        dirRt.anchorMin = Vector2.zero;
+        dirRt.anchorMax = Vector2.one;
+        dirRt.offsetMin = Vector2.zero;
+        dirRt.offsetMax = Vector2.zero;
+        _dirImage.sprite = Sprite.Create(MakeDirectionTexture(256),
+            new Rect(0, 0, 256, 256), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect);
+        _dirImage.color = new Color(1f, 0.25f, 0.15f, 0f);
+        _dirImage.raycastTarget = false;
+    }
+
+    /// Arc concentrated on ONE edge (points "up" at rest): bright near the rim, fading toward
+    /// the centre and toward the sides. Rotating the rect aims it at the attacker.
+    /// The canvas plane is far wider than the headset FOV, so the bright band sits at ~0.2-0.5
+    /// of the normalized radius -- pushed further out it renders outside what the eye can see.
+    private Texture2D MakeDirectionTexture(int size)
+    {
+        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        var pixels = new Color32[size * size];
+        float half = size * 0.5f;
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float dx = (x - half) / half;
+                float dy = (y - half) / half;
+                float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                float radial = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.18f, 0.45f, dist));
+                float dot = dist > 0.001f ? dy / dist : 0f;             // 1 = straight up
+                float angular = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-0.1f, 0.8f, dot));
+                pixels[y * size + x] = new Color32(255, 255, 255, (byte)(radial * angular * 255f));
+            }
+        }
+        tex.SetPixels32(pixels);
+        tex.Apply();
+        tex.wrapMode = TextureWrapMode.Clamp;
+        return tex;
+    }
+
+    private void OnDamagedFrom(Vector3 attackerPos)
+    {
+        _attackerPos = attackerPos;
+        _dirPulse = 1f;
+    }
+
+    private void OnDestroy()
+    {
+        if (_localPlayer != null && _subscribed) _localPlayer.OnDamagedFrom -= OnDamagedFrom;
     }
 
     /// Radial texture: transparent center, opaque edges (the vignette shape).
@@ -110,6 +175,14 @@ public class DamageVignette : MonoBehaviour
         }
         if (_localPlayer.Object == null || !_localPlayer.Object.IsValid || _image == null) return;
 
+        if (!_subscribed)
+        {
+            _localPlayer.OnDamagedFrom += OnDamagedFrom;
+            _subscribed = true;
+        }
+
+        UpdateDirectionArc();
+
         int h = _localPlayer.Health;
         if (_lastHealth == int.MinValue) _lastHealth = h;
 
@@ -136,6 +209,33 @@ public class DamageVignette : MonoBehaviour
         var c = _image.color;
         c.a = alpha;
         _image.color = c;
+    }
+
+    /// Aims the arc at the last attacker, re-computed every frame so it stays correct while
+    /// the player turns their head (an arc frozen at hit time would lie the moment you look).
+    private void UpdateDirectionArc()
+    {
+        if (_dirImage == null) return;
+
+        _dirPulse = Mathf.Max(0f, _dirPulse - Time.deltaTime / Mathf.Max(0.05f, dirFadeTime));
+        if (_dirPulse <= 0f)
+        {
+            var off = _dirImage.color; off.a = 0f; _dirImage.color = off;
+            return;
+        }
+        if (_head == null) return;
+
+        Vector3 local = _head.InverseTransformPoint(_attackerPos);
+        local.y = 0f;
+        if (local.sqrMagnitude > 0.0001f)
+        {
+            float angle = Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg;   // 0 = ahead, 180 = behind
+            _dirImage.rectTransform.localRotation = Quaternion.Euler(0f, 0f, -angle);
+        }
+
+        var c = _dirImage.color;
+        c.a = _dirPulse * dirMaxAlpha;
+        _dirImage.color = c;
     }
 
     private void Jolt()

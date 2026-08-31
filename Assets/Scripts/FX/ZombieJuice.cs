@@ -11,6 +11,8 @@ public class ZombieJuice : MonoBehaviour
     [SerializeField] private int headshotPoints = 25;
 
     [Header("Blood Puff")]
+    [Tooltip("Optional: your own blood VFX prefab. When assigned it replaces the procedural puff.")]
+    [SerializeField] private GameObject bloodPrefabOverride;
     [SerializeField] private Color bloodColor = new Color(0.45f, 0.03f, 0.03f, 0.9f);
 
     private NetworkZombie _zombie;
@@ -29,6 +31,16 @@ public class ZombieJuice : MonoBehaviour
 
     private void BloodPuff(Vector3 pos)
     {
+        // User-authored VFX takes over when assigned
+        if (bloodPrefabOverride != null)
+        {
+            var vfx = Instantiate(bloodPrefabOverride, pos, Quaternion.identity);
+            var vfxPs = vfx.GetComponentInChildren<ParticleSystem>();
+            if (vfxPs != null && !vfxPs.isPlaying) vfxPs.Play();
+            Destroy(vfx, 4f);
+            return;
+        }
+
         if (_bloodMat == null)
         {
             _bloodMat = new Material(Shader.Find("Sprites/Default"));

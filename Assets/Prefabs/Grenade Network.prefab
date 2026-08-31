@@ -274,7 +274,7 @@ MonoBehaviour:
   heldNoFriction: 1
   ignoreWeight: 0
   allowHeldSwapping: 1
-  throwPower: 1.2
+  throwPower: 1.8
   jointBreakForce: 3500
   showAdvancedSettings: 1
   makeChildrenGrabbable: 1

@@ -7,10 +7,15 @@ using Autohand;
 /// player's networked TutorialDone (the lobby gates the match start on it).
 public class TutorialManager : MonoBehaviour
 {
-    [Tooltip("Signs in order: Grab, Load, RackSlide, Fire, Grenade, Done. Only one is visible at a time.")]
+    [Tooltip("Signs in order: TriggerGrip, Support, Load, RackSlide, Fire, Grenade, Done. Only one is visible at a time.")]
     [SerializeField] private GameObject[] steps;
+    [Tooltip("Rifle BODY grabbable (Core): the front-grip / support hand. Advances the SUPPORT step.")]
     [SerializeField] private Grabbable rifleGrabbable;
     [SerializeField] private AutoGun gun;
+
+    [Header("Trigger Grip Step")]
+    [Tooltip("Rifle HANDLE grabbables (the pistol grip with the trigger). Grabbing any advances step 1.")]
+    [SerializeField] private Grabbable[] triggerGrabbables;
 
     [Header("Second Station (optional)")]
     [SerializeField] private Grabbable[] extraRifles;
@@ -34,6 +39,9 @@ public class TutorialManager : MonoBehaviour
 
     private void Start()
     {
+        if (triggerGrabbables != null)
+            foreach (var t in triggerGrabbables)
+                if (t != null) t.OnGrabEvent += OnTriggerGripGrab;
         if (rifleGrabbable != null) rifleGrabbable.OnGrabEvent += OnRifleGrab;
         if (gun != null)
         {
@@ -72,24 +80,27 @@ public class TutorialManager : MonoBehaviour
         var root = c.transform.root;
         foreach (var g in root.GetComponentsInChildren<Grabbable>(true))
             if (g != null && g.IsHeld()) return true;
-        Debug.Log("[TutDbg] Event rejected (nothing held) from " + root.name);
         return false;
     }
 
-    private void OnRifleGrab(Hand hand, Grabbable g) { if (!IsMine(g)) return; Debug.Log("[TutDbg] RifleGrab step=" + _step); if (_step == 0) Show(1); }
-    private void OnMagPlaced(AutoGun g, AutoAmmo a) { if (!IsMine(g)) return; Debug.Log("[TutDbg] MagPlaced step=" + _step); if (_step <= 1) Show(2); }
+    // Step 0: hold the rifle by the TRIGGER GRIP (Handle grabbable). Step 1: support hand on
+    // the front grip (Core grabbable). No IsMine filter here: Grabbable.OnGrabEvent only ever
+    // fires for LOCAL hands, and it fires BEFORE the hand registers as holding -- an IsHeld()
+    // check at this instant would reject the player's own grab.
+    private void OnTriggerGripGrab(Hand hand, Grabbable g) { if (_step == 0) Show(1); }
+    private void OnRifleGrab(Hand hand, Grabbable g) { if (_step == 1) Show(2); }
+    private void OnMagPlaced(AutoGun g, AutoAmmo a) { if (!IsMine(g)) return; if (_step <= 2) Show(3); }
     private void OnSlideLoaded(AutoGun g, SlideLoadType t)
     {
         if (!IsMine(g)) return;
-        Debug.Log("[TutDbg] SlideLoaded step=" + _step + " type=" + t);
-        if (t == SlideLoadType.HandLoaded && _step <= 2) Show(3);
+        if (t == SlideLoadType.HandLoaded && _step <= 3) Show(4);
     }
-    private void OnShot(AutoGun g) { if (!IsMine(g)) return; Debug.Log("[TutDbg] Shot step=" + _step); if (_step <= 3) Show(4); }
+    private void OnShot(AutoGun g) { if (!IsMine(g)) return; if (_step <= 4) Show(5); }
 
     private void OnGrenadeThrown()
     {
-        if (_step > 4) return;
-        Show(5);
+        if (_step > 5) return;
+        Show(6);
         StartCoroutine(MarkTutorialDone());
     }
 
@@ -115,7 +126,6 @@ public class TutorialManager : MonoBehaviour
 
     private void Show(int step)
     {
-        Debug.Log("[TutDbg] Show(" + step + ") prev=" + _step + " sign=" + (step < steps.Length && steps[step] != null ? steps[step].name : "NULL"));
         Vector3? carryPos = null;
         Quaternion? carryRot = null;
         if (_step >= 0 && _step < steps.Length && steps[_step] != null)
@@ -130,23 +140,26 @@ public class TutorialManager : MonoBehaviour
             steps[step].transform.SetPositionAndRotation(carryPos.Value, carryRot.Value);
 
         // The grenade step reveals the grenades: appearing right on cue IS the instruction
-        if (step == 4 && grenades != null)
+        if (step == 5 && grenades != null)
             foreach (var gr in grenades)
                 if (gr != null && !gr.gameObject.activeSelf) gr.gameObject.SetActive(true);
 
         // The LOAD step reveals the mags -- can't skip ahead loading from another angle
-        if (step >= 1)
+        if (step >= 2)
             SetAmmoVisible(true);
     }
 
     private void SetAmmoVisible(bool visible)
     {
+        // Renderers + grabbability ONLY. Colliders and physics stay untouched: disabling
+        // colliders let gravity drop the mags through the bench, and re-enabling them while
+        // embedded in geometry made PhysX eject them skyward (the "flying ammo" bug).
         if (ammoObjects == null) return;
         foreach (var ammo in ammoObjects)
         {
             if (ammo == null) continue;
             foreach (var r in ammo.GetComponentsInChildren<Renderer>(true)) r.enabled = visible;
-            foreach (var col in ammo.GetComponentsInChildren<Collider>(true)) col.enabled = visible;
+            foreach (var g in ammo.GetComponentsInChildren<Grabbable>(true)) g.enabled = visible;
         }
     }
 
@@ -158,7 +171,6 @@ public class TutorialManager : MonoBehaviour
             var ahp = FindFirstObjectByType<AutoHandPlayer>();
             if (ahp != null && ahp.headCamera != null) _head = ahp.headCamera.transform;
             if (_head == null) return;
-            Debug.Log("[TutDbg] Head acquired: " + _head.name);
         }
         var sign = steps[_step].transform;
         Vector3 fwd = _head.forward;

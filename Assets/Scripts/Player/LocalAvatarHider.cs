@@ -32,27 +32,35 @@ public class LocalAvatarHider : NetworkBehaviour
         }
 
         if (head != null)
-        {
             head.localScale = Vector3.one * 0.001f;
-            Debug.Log("[LocalAvatarHider] Own head hidden (" + head.name + ")");
-        }
         else
-        {
             Debug.LogWarning("[LocalAvatarHider] Head bone not found.");
-        }
+
+        // The neck stump is what you see when looking down. Collapse it too -- but only after
+        // VRIK has initiated (it samples bone lengths on its first Update; collapsing the neck
+        // before that would poison the spine solve).
+        StartCoroutine(HideNeckAfterIKInit());
 
         // Hide the avatar's own hands too: locally your AutoHand hands ARE your hands;
         // the avatar's copies would double up. Remote players still see them.
-        int hiddenHands = 0;
+        foreach (var t in GetComponentsInChildren<Transform>(true))
+            if (t.name.EndsWith(":RightHand") || t.name.EndsWith(":LeftHand"))
+                t.localScale = Vector3.one * 0.001f;
+    }
+
+    private System.Collections.IEnumerator HideNeckAfterIKInit()
+    {
+        yield return null;
+        yield return null;
+        yield return null;
         foreach (var t in GetComponentsInChildren<Transform>(true))
         {
-            if (t.name.EndsWith(":RightHand") || t.name.EndsWith(":LeftHand"))
+            if (t.name.EndsWith(":Neck"))
             {
                 t.localScale = Vector3.one * 0.001f;
-                hiddenHands++;
+                break;
             }
         }
-        Debug.Log("[LocalAvatarHider] Own avatar hands hidden: " + hiddenHands);
     }
 }
 

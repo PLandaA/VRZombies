@@ -37,6 +37,7 @@ public class NetworkZombie : NetworkBehaviour
     [Networked] private int AttackTick { get; set; }
     [Networked] private TickTimer AttackCooldownTimer { get; set; }
     [Networked] private TickTimer PendingHitTimer { get; set; }
+    [Networked] private TickTimer StaggerTimer { get; set; }
     [Networked] private TickTimer RetargetTimer { get; set; }
     [Networked] private TickTimer WanderTimer { get; set; }
     [Networked] private TickTimer DespawnTimer { get; set; }
@@ -241,7 +242,12 @@ public class NetworkZombie : NetworkBehaviour
             State = ZombieState.Chasing;
             PendingHitTimer = TickTimer.None;   // stepping out dodges the pending bite
             if (_agent != null && _agent.enabled)
+            {
+                // Stagger: a fresh bullet briefly cuts the charge to a stumble, so shots
+                // read as physical impacts instead of just a colour flash
+                _agent.speed = StaggerTimer.ExpiredOrNotRunning(Runner) ? runSpeed : runSpeed * 0.3f;
                 _agent.SetDestination(targetPos);
+            }
         }
 
         UpdateAnimSpeed();
@@ -262,6 +268,12 @@ public class NetworkZombie : NetworkBehaviour
                     animator.ResetTrigger(attackParam);   // never queue an attack into the death anim
                     animator.SetTrigger(dieParam);
                     OnDiedRender?.Invoke(DiedByHeadshot);
+
+                    // Corpses must not block bullets: disable every collider on EVERY client
+                    // (each shooter raycasts locally). The body has no dynamic rigidbody, so
+                    // the posed corpse stays on the ground just fine without them.
+                    foreach (var col in GetComponentsInChildren<Collider>(true))
+                        col.enabled = false;
                 }
                 else
                 {
@@ -346,7 +358,7 @@ public class NetworkZombie : NetworkBehaviour
         if (_targetTransform == null) return;
         var np = ResolveNetworkPlayer(_targetTransform);
         if (np != null && np.Object != null && np.Object.IsValid && !np.IsDead)
-            np.RPC_TakeDamage(attackDamage);
+            np.RPC_TakeDamage(attackDamage, transform.position);   // position drives the directional hit indicator
     }
 
     private NetworkPlayer ResolveNetworkPlayer(Transform t)
@@ -374,6 +386,8 @@ public class NetworkZombie : NetworkBehaviour
     {
         if (State == ZombieState.Dead) return;
         Health = Mathf.Max(0, Health - amount);
+        if (Health > 0)
+            StaggerTimer = TickTimer.CreateFromSeconds(Runner, 0.18f);
         if (Health <= 0)
         {
             DiedByHeadshot = headshot;

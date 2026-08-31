@@ -26,7 +26,6 @@ public class EmptyMagFeedback : MonoBehaviour
     {
         if (Time.time - _lastPulse < 0.15f) return;   // throttle auto-fire spam
         _lastPulse = Time.time;
-        Debug.Log("[DryFire] Empty shoot event received");
         if (_grab == null) return;
         foreach (var hand in _grab.GetHeldBy())
         {

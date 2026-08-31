@@ -45,6 +45,8 @@ Assets/free horror ambience 2/
 Assets/free horror ambience 2.meta
 Assets/Feel/
 Assets/Feel.meta
+Assets/Plugins/RootMotion/
+Assets/Plugins/RootMotion.meta
 Assets/XR/
 Assets/XRI/
 Assets/Oculus/
@@ -53,6 +55,17 @@ Assets/StreamingAssets/
 # ===== Assistant scratch / diagnostics =====
 Assets/LazyRayData/
 Assets/LazyRayData.meta
+
+# ===== MCP dev tooling (editor-only bridges for AI-assisted development) =====
+Packages/com.lazyray.mcp/
+Packages/com.lazyray.mcp.meta
+Assets/MCPForUnity/
+Assets/MCPForUnity.meta
+Assets/LazyRay/
+Assets/LazyRay.meta
+.mcp.json
+.claude/
+.cursor/
 
 # ===== Build outputs =====
 *.apk

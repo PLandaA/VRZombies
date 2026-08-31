@@ -44,11 +44,18 @@ public class NetworkPlayer : NetworkBehaviour
         base.Spawned();
     }
 
+    /// Fired on the victim's own client with the attacker's world position (the RPC below
+    /// targets StateAuthority, which in Shared Mode is the victim). Drives the directional
+    /// damage indicator -- in VR you have no rear peripheral vision to tell you who bit you.
+    public event System.Action<Vector3> OnDamagedFrom;
+
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    public void RPC_TakeDamage(int amount)
+    public void RPC_TakeDamage(int amount, Vector3 attackerPos = default)
     {
         if (IsDead) return;
         Health = Mathf.Max(0, Health - amount);
+        if (attackerPos != Vector3.zero)
+            OnDamagedFrom?.Invoke(attackerPos);
         if (Health <= 0)
             IsDead = true;
     }

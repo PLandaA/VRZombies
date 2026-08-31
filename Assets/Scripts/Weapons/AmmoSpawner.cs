@@ -77,8 +77,13 @@ public class AmmoSpawner : NetworkBehaviour
         for (int i = 0; i < toSpawn; i++)
         {
             var p = spawnPoints[i % spawnPoints.Length];
-            Runner.Spawn(ammoPrefab, p.position, p.rotation);
+            var spawned = Runner.Spawn(ammoPrefab, p.position, p.rotation);
+
+            // Match the spawn marker's scale: the level's starting magazines are scaled up
+            // (2x) in the scene, so prefab-scale refills looked like different, misplaced
+            // objects. The marker now defines pose AND size in one place.
+            if (spawned != null)
+                spawned.transform.localScale = p.lossyScale;
         }
-        Debug.Log("[AmmoSpawner] Loose mags with ammo: " + available + " -> spawned " + toSpawn + " new.");
     }
 }

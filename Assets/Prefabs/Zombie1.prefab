@@ -2128,6 +2128,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ZombieJuice
   killPoints: 10
   headshotPoints: 25
+  bloodPrefabOverride: {fileID: 4425269632102290907, guid: 5a98b06ecb8f96a4facd5bf59ad1d2a3, type: 3}
   bloodColor: {r: 0.45, g: 0.03, b: 0.03, a: 0.9}
 --- !u!1 &4710940672626480558
 GameObject:

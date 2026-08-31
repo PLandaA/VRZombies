@@ -54,14 +54,20 @@ public class NetworkAutoGun : NetworkBehaviour
         _gun.OnHitEvent.AddListener(OnLocalHit);
         _gun.OnAmmoPlaceEvent.AddListener(OnLocalAmmoPlace);
         _gun.OnAmmoRemoveEvent.AddListener(OnLocalAmmoRemove);
-                _grabbable.OnBeforeGrabEvent += OnBeforeGrabbed;
+        _grabbable.OnBeforeGrabEvent += OnBeforeGrabbed;
         _grabbable.OnGrabEvent += OnGrabbed;
         foreach (var childGrab in GetComponentsInChildren<Grabbable>(true))
         {
             if (childGrab != _grabbable)
                 childGrab.OnBeforeGrabEvent += OnChildGrabbed;
+
+            // Authority-on-approach: request ownership the moment a hand HIGHLIGHTS any part
+            // of the weapon. The network round-trip completes while the player is still
+            // reaching, so by grab time the client already owns it -- this kills the
+            // "heavier than normal for the client" first-grab feel (the master never felt it
+            // because scene objects start under its authority).
+            childGrab.OnHighlightEvent += OnAnyHighlight;
         }
-        _grabbable.OnGrabEvent += OnGrabbed;
         if (Object.HasStateAuthority)
         {
             NetworkedAmmo = _gun.GetAmmo();
@@ -84,6 +90,7 @@ public class NetworkAutoGun : NetworkBehaviour
         {
             if (childGrab != _grabbable)
                 childGrab.OnBeforeGrabEvent -= OnChildGrabbed;
+            childGrab.OnHighlightEvent -= OnAnyHighlight;
         }
         base.Despawned(runner, hasState);
     }
@@ -120,6 +127,12 @@ public class NetworkAutoGun : NetworkBehaviour
             magBeh2.transform.localPosition = Vector3.zero;
             magBeh2.transform.localRotation = Quaternion.identity;
         }
+    }
+
+    private void OnAnyHighlight(Hand hand, Grabbable g)
+    {
+        if (Object != null && Object.IsValid && !Object.HasStateAuthority)
+            Object.RequestStateAuthority();
     }
 
     private void OnBeforeGrabbed(Hand hand, Grabbable grabbable)
