@@ -1,49 +1,58 @@
 using UnityEngine;
 using Fusion;
 using Autohand;
+using VRZ.Core;
+using VRZ.Network;
+using VRZ.Player;
+using VRZ.Enemies;
+using VRZ.FX;
+using VRZ.World;
 
-/// Spawns bullet impact particles for the shooter and replicates them to remote clients via RPC.
-public class NetworkGunHitEffect : NetworkBehaviour
+namespace VRZ.Weapons
 {
-    [Tooltip("Particle prefab instantiated at the bullet impact point")]
-    [SerializeField] private GameObject hitEffectPrefab;
 
-    [Tooltip("Seconds before the impact effect instance is destroyed")]
-    [SerializeField] private float effectLifetime = 2f;
-
-    private AutoGun _gun;
-
-    public override void Spawned()
+    /// Spawns bullet impact particles for the shooter and replicates them to remote clients via RPC.
+    public class NetworkGunHitEffect : NetworkBehaviour
     {
-        _gun = GetComponent<AutoGun>();
-        if (_gun != null)
-            _gun.OnHitEvent.AddListener(OnLocalHit);
-    }
+        [Tooltip("Particle prefab instantiated at the bullet impact point")]
+        [SerializeField] private GameObject hitEffectPrefab;
 
-    public override void Despawned(NetworkRunner runner, bool hasState)
-    {
-        if (_gun != null)
-            _gun.OnHitEvent.RemoveListener(OnLocalHit);
-    }
+        [Tooltip("Seconds before the impact effect instance is destroyed")]
+        [SerializeField] private float effectLifetime = 2f;
 
-    private void OnLocalHit(AutoGun gun, RaycastHit hit)
-    {
-        if (Object == null || !Object.HasStateAuthority) return;
+        private AutoGun _gun;
 
-        SpawnEffect(hit.point, hit.normal);
-        RPC_HitEffect(hit.point, hit.normal);
-    }
+        public override void Spawned()
+        {
+            _gun = GetComponent<AutoGun>();
+            if (_gun != null)
+                _gun.OnHitEvent.AddListener(OnLocalHit);
+        }
 
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All, InvokeLocal = false)]
-    private void RPC_HitEffect(Vector3 point, Vector3 normal)
-    {
-        SpawnEffect(point, normal);
-    }
+        public override void Despawned(NetworkRunner runner, bool hasState)
+        {
+            if (_gun != null)
+                _gun.OnHitEvent.RemoveListener(OnLocalHit);
+        }
 
-    private void SpawnEffect(Vector3 point, Vector3 normal)
-    {
-        if (hitEffectPrefab == null) return;
-        var fx = Instantiate(hitEffectPrefab, point + normal * 0.01f, Quaternion.LookRotation(normal));
-        Destroy(fx, effectLifetime);
+        private void OnLocalHit(AutoGun gun, RaycastHit hit)
+        {
+            if (Object == null || !Object.HasStateAuthority) return;
+
+            SpawnEffect(hit.point, hit.normal);
+            RPC_HitEffect(hit.point, hit.normal);
+        }
+
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All, InvokeLocal = false)]
+        private void RPC_HitEffect(Vector3 point, Vector3 normal)
+        {
+            SpawnEffect(point, normal);
+        }
+
+        private void SpawnEffect(Vector3 point, Vector3 normal)
+        {
+            if (hitEffectPrefab == null) return;
+            PrefabPool.Spawn(hitEffectPrefab, point + normal * 0.01f, Quaternion.LookRotation(normal), effectLifetime);
+        }
     }
 }

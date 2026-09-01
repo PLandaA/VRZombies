@@ -1,22 +1,32 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR;
+using VRZ.Core;
+using VRZ.Network;
+using VRZ.Weapons;
+using VRZ.Enemies;
+using VRZ.FX;
+using VRZ.World;
 
-/// Forces the XR runtime to use Floor tracking origin so the camera reports
-/// real head height above the physical floor (the AutoHand rig has no XROrigin).
-public class ForceFloorTrackingOrigin : MonoBehaviour
+namespace VRZ.Player
 {
-    private void Start()
+
+    /// Forces the XR runtime to use Floor tracking origin so the camera reports
+    /// real head height above the physical floor (the AutoHand rig has no XROrigin).
+    public class ForceFloorTrackingOrigin : MonoBehaviour
     {
-        var subsystems = new List<XRInputSubsystem>();
-        SubsystemManager.GetSubsystems(subsystems);
-        foreach (var s in subsystems)
+        private void Start()
         {
-            bool ok = s.TrySetTrackingOriginMode(TrackingOriginModeFlags.Floor);
-            Debug.Log("[TrackingOrigin] '" + s.subsystemDescriptor.id + "' -> Floor: " + ok +
-                      " (mode actual: " + s.GetTrackingOriginMode() + ")");
+            var subsystems = new List<XRInputSubsystem>();
+            SubsystemManager.GetSubsystems(subsystems);
+            foreach (var s in subsystems)
+            {
+                bool ok = s.TrySetTrackingOriginMode(TrackingOriginModeFlags.Floor);
+                Debug.Log("[TrackingOrigin] '" + s.subsystemDescriptor.id + "' -> Floor: " + ok +
+                          " (mode actual: " + s.GetTrackingOriginMode() + ")");
+            }
+            if (subsystems.Count == 0)
+                Debug.LogWarning("[TrackingOrigin] No XRInputSubsystem found (no headset connected?).");
         }
-        if (subsystems.Count == 0)
-            Debug.LogWarning("[TrackingOrigin] No XRInputSubsystem found (no headset connected?).");
     }
 }

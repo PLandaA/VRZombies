@@ -1,89 +1,99 @@
 using UnityEngine;
 using Fusion;
 using Autohand;
+using VRZ.Core;
+using VRZ.Network;
+using VRZ.Player;
+using VRZ.Enemies;
+using VRZ.FX;
+using VRZ.World;
 
-/// Spawns fresh magazines between waves and despawns empty loose ones (state authority only).
-public class AmmoSpawner : NetworkBehaviour
+namespace VRZ.Weapons
 {
-    [Tooltip("Networked magazine prefab")]
-    [SerializeField] private NetworkObject ammoPrefab;
 
-    [Tooltip("Spawn points for fresh magazines")]
-    [SerializeField] private Transform[] spawnPoints;
-
-    [Tooltip("Magazines spawned per intermission")]
-    [SerializeField] private int magsPerIntermission = 2;
-
-    private ZombieSpawner _waveSystem;
-
-    public override void Spawned()
+    /// Spawns fresh magazines between waves and despawns empty loose ones (state authority only).
+    public class AmmoSpawner : NetworkBehaviour
     {
-        _waveSystem = FindFirstObjectByType<ZombieSpawner>();
-        if (_waveSystem != null)
-            _waveSystem.OnIntermissionStarted.AddListener(OnIntermission);
-        else
-            Debug.LogWarning("[AmmoSpawner] ZombieSpawner not found.");
-    }
+        [Tooltip("Networked magazine prefab")]
+        [SerializeField] private NetworkObject ammoPrefab;
 
-    public override void Despawned(NetworkRunner runner, bool hasState)
-    {
-        if (_waveSystem != null)
-            _waveSystem.OnIntermissionStarted.RemoveListener(OnIntermission);
-    }
+        [Tooltip("Spawn points for fresh magazines")]
+        [SerializeField] private Transform[] spawnPoints;
 
-    private void OnIntermission(int nextWave)
-    {
-        if (Object == null || !Object.HasStateAuthority) return;
+        [Tooltip("Magazines spawned per intermission")]
+        [SerializeField] private int magsPerIntermission = 2;
 
-        CleanupEmptyMags();
-        SpawnFreshMags();
-    }
+        private ZombieSpawner _waveSystem;
 
-    private void CleanupEmptyMags()
-    {
-        foreach (var ammo in FindObjectsByType<AutoAmmo>(FindObjectsSortMode.None))
+        public override void Spawned()
         {
-            if (ammo.currentAmmo > 0) continue;
-            if (ammo.transform.parent != null) continue;
-            var grab = ammo.GetComponent<Grabbable>();
-            if (grab != null && grab.IsHeld()) continue;
-
-            var no = ammo.GetComponent<NetworkObject>();
-            if (no != null && no.IsValid)
-                Runner.Despawn(no);
-        }
-    }
-
-    private void SpawnFreshMags()
-    {
-        if (ammoPrefab == null || spawnPoints == null || spawnPoints.Length == 0)
-        {
-            Debug.LogWarning("[AmmoSpawner] Missing ammoPrefab or spawnPoints.");
-            return;
+            _waveSystem = FindFirstObjectByType<ZombieSpawner>();
+            if (_waveSystem != null)
+                _waveSystem.OnIntermissionStarted.AddListener(OnIntermission);
+            else
+                Debug.LogWarning("[AmmoSpawner] ZombieSpawner not found.");
         }
 
-        int available = 0;
-        foreach (var ammo in FindObjectsByType<AutoAmmo>(FindObjectsSortMode.None))
+        public override void Despawned(NetworkRunner runner, bool hasState)
         {
-            if (ammo.currentAmmo <= 0) continue;
-            if (ammo.transform.parent != null) continue;
-            var grab = ammo.GetComponent<Grabbable>();
-            if (grab != null && grab.IsHeld()) continue;
-            if (ammo.GetComponent<NetworkObject>() == null) continue;
-            available++;
+            if (_waveSystem != null)
+                _waveSystem.OnIntermissionStarted.RemoveListener(OnIntermission);
         }
 
-        int toSpawn = Mathf.Max(0, magsPerIntermission - available);
-        for (int i = 0; i < toSpawn; i++)
+        private void OnIntermission(int nextWave)
         {
-            var p = spawnPoints[i % spawnPoints.Length];
-            var spawned = Runner.Spawn(ammoPrefab, p.position, p.rotation);
+            if (Object == null || !Object.HasStateAuthority) return;
 
-            // Match the spawn marker's scale: the level's starting magazines are scaled up
-            // (2x) in the scene, so prefab-scale refills looked like different, misplaced
-            // objects. The marker now defines pose AND size in one place.
-            if (spawned != null)
-                spawned.transform.localScale = p.lossyScale;
+            CleanupEmptyMags();
+            SpawnFreshMags();
+        }
+
+        private void CleanupEmptyMags()
+        {
+            foreach (var ammo in FindObjectsByType<AutoAmmo>(FindObjectsSortMode.None))
+            {
+                if (ammo.currentAmmo > 0) continue;
+                if (ammo.transform.parent != null) continue;
+                var grab = ammo.GetComponent<Grabbable>();
+                if (grab != null && grab.IsHeld()) continue;
+
+                var no = ammo.GetComponent<NetworkObject>();
+                if (no != null && no.IsValid)
+                    Runner.Despawn(no);
+            }
+        }
+
+        private void SpawnFreshMags()
+        {
+            if (ammoPrefab == null || spawnPoints == null || spawnPoints.Length == 0)
+            {
+                Debug.LogWarning("[AmmoSpawner] Missing ammoPrefab or spawnPoints.");
+                return;
+            }
+
+            int available = 0;
+            foreach (var ammo in FindObjectsByType<AutoAmmo>(FindObjectsSortMode.None))
+            {
+                if (ammo.currentAmmo <= 0) continue;
+                if (ammo.transform.parent != null) continue;
+                var grab = ammo.GetComponent<Grabbable>();
+                if (grab != null && grab.IsHeld()) continue;
+                if (ammo.GetComponent<NetworkObject>() == null) continue;
+                available++;
+            }
+
+            int toSpawn = Mathf.Max(0, magsPerIntermission - available);
+            for (int i = 0; i < toSpawn; i++)
+            {
+                var p = spawnPoints[i % spawnPoints.Length];
+                var spawned = Runner.Spawn(ammoPrefab, p.position, p.rotation);
+
+                // Match the spawn marker's scale: the level's starting magazines are scaled up
+                // (2x) in the scene, so prefab-scale refills looked like different, misplaced
+                // objects. The marker now defines pose AND size in one place.
+                if (spawned != null)
+                    spawned.transform.localScale = p.lossyScale;
+            }
         }
     }
 }

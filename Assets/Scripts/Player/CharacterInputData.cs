@@ -2,20 +2,30 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Fusion;
+using VRZ.Core;
+using VRZ.Network;
+using VRZ.Weapons;
+using VRZ.Enemies;
+using VRZ.FX;
+using VRZ.World;
 
-/// Input struct sent from the hardware rig to the network each tick (head, hands, character pose).
-public struct CharacterInputData : INetworkInput
+namespace VRZ.Player
 {
-    public Vector3 characterPosition;
-    public Quaternion characterRotation;
 
-    public Vector3 headPosition;
-    public Quaternion headRotation;
+    /// Input struct sent from the hardware rig to the network each tick (head, hands, character pose).
+    public struct CharacterInputData : INetworkInput
+    {
+        public Vector3 characterPosition;
+        public Quaternion characterRotation;
 
-    public Vector3 handRightPosition;
-    public Quaternion handRightRotation;
+        public Vector3 headPosition;
+        public Quaternion headRotation;
 
-    public Vector3 handLeftPosition;
-    public Quaternion handLeftRotation;
+        public Vector3 handRightPosition;
+        public Quaternion handRightRotation;
 
+        public Vector3 handLeftPosition;
+        public Quaternion handLeftRotation;
+
+    }
 }
