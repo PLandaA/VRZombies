@@ -226,7 +226,7 @@ namespace VRZ.Enemies
         // rewrites the transform ~1 tick behind the agent. The agent keeps its own idea of where
         // it is (nextPosition), so |nextPosition - transform.position| at Render time IS the
         // pull-back. Expected: ~0 with the flag on, up to ~0.11 m at 3.5 m/s with it off.
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if VRZ_NET_DIAGNOSTICS
         private float _gapMax, _gapLogAt;
         private void LogInterpolationGap()
         {

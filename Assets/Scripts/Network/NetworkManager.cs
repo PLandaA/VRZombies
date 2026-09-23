@@ -364,42 +364,36 @@ namespace VRZ.Network
         {
             Debug.Log("NewPlayer Joined" + player);
             SpawnPlayer(runner, player);
-            _wasMaster = runner.IsSharedModeMasterClient;
         }
 
         // Netcode fix B4 (minimum): the master client owns the wave spawner, the ammo dispenser
         // and every zombie. When it leaves, Fusion orphans or destroys those objects and the
         // survivor is stuck in a frozen, unfinishable arena. We cannot restore the match (the
         // spawner's wave state is not replicated), so we end it cleanly instead.
-        private bool _wasMaster;
-
         public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
         {
             Debug.Log("[NetworkManager] Player left: " + player);
             RemovePlayer(player);
 
-            // Fusion promotes a new master before this callback. If we were not master and now
-            // we are, the one who left was the master.
-            bool masterLeft = !_wasMaster && runner.IsSharedModeMasterClient;
-            _wasMaster = runner.IsSharedModeMasterClient;
-
             bool inArena = SceneManager.GetActiveScene().buildIndex != 0;
-            if (inArena) StartCoroutine(EndMatchIfOrphaned(masterLeft));
+            if (inArena) StartCoroutine(EndMatchIfOrphaned());
         }
 
-        private IEnumerator EndMatchIfOrphaned(bool masterLeft)
+        private IEnumerator EndMatchIfOrphaned()
         {
-            // Give Fusion a moment to apply the departed player's object flags, then confirm on
-            // the spawner itself: an orphan has no State Authority at all.
+            // Give Fusion a moment to apply the departed player's object flags, then ask the spawner
+            // itself. This is the only reliable signal: an earlier second check ("I was not master
+            // and now I am") depends on when Photon promotes the new master relative to this
+            // callback, and in two-build tests it did not fire in time while this one always did.
             yield return new WaitForSeconds(0.25f);
 
             var spawner = VRZ.Enemies.ZombieSpawner.Current;   // self-registered (fix A8)
-            bool spawnerOrphaned = spawner != null && spawner.Object != null && spawner.Object.IsValid
-                                   && spawner.Object.StateAuthority == PlayerRef.None;
+            bool spawnerMissing = spawner == null || spawner.Object == null || !spawner.Object.IsValid;
+            bool spawnerOrphaned = !spawnerMissing && spawner.Object.StateAuthority == PlayerRef.None;
 
-            if (!masterLeft && !spawnerOrphaned) yield break;   // a non-master left: the match goes on
+            if (!spawnerMissing && !spawnerOrphaned) yield break;   // a non-master left: the match goes on
 
-            Debug.LogWarning("[NetworkManager] Master client left (masterLeft=" + masterLeft + ", spawnerOrphaned=" + spawnerOrphaned + "). Ending the match.");
+            Debug.LogWarning("[NetworkManager] Wave spawner " + (spawnerMissing ? "gone" : "orphaned") + " after a player left: the host is gone. Ending the match.");
             var go = VRZ.World.GameOverController.Instance;
             if (go != null) go.EndMatch("PARTNER LEFT", "The host disconnected. Returning to the lobby...", 6f);
         }

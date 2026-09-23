@@ -122,7 +122,10 @@ namespace VRZ.Weapons
         // NON-master's hands"). If our authority request was dropped, the hand joint pulls the
         // rifle one way while NetworkRigidbody3D (proxy) snaps it back to the owner's pose every
         // frame: exactly a violent shake. Keep asking while we hold it, and say so in the log.
-        private float _nextAuthorityRetry, _nextHeldLog;
+        private float _nextAuthorityRetry;
+#if VRZ_NET_DIAGNOSTICS
+        private float _nextHeldLog;
+#endif
 
         private void Update()
         {
@@ -137,7 +140,7 @@ namespace VRZ.Weapons
                 Debug.LogWarning("[NetGun] Held but no State Authority (owner=" + Object.StateAuthority + "): re-requesting.");
             }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if VRZ_NET_DIAGNOSTICS
             if (Time.time >= _nextHeldLog)
             {
                 _nextHeldLog = Time.time + 1f;

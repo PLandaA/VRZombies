@@ -96,7 +96,7 @@ A cooperative VR zombie survival game for 2 players, built in Unity 6 (URP) with
 
 Every networked system (15 of them: session, lobby, maps, player state, avatar, rifle, magazines, impacts, weapon return, grenades, waves, zombies, score, game over, presentation readers) was inventoried and analysed one at a time against the same template: what it does on the wire and who holds authority, which decisions were deliberate vs. untouched Fusion defaults, the alternatives Fusion 2 offers, where it breaks (latency, packet loss, authority changes in flight, the authority disconnecting), what is actually measured vs. assumed, and what would break first at 5x the players. Claims about Fusion defaults were checked against the SDK source or the compiled IL rather than remembered.
 
-Fixes were then prioritised with one rule -- *does it break the two-player experience on Quest?* -- and every one was verified in two-build sessions before moving on. The blockers it found: the game could not be replayed without restarting the app, random matchmaking put strangers in the same room, test values left in the scenes (`maxHealth = 10000`, one-player gates) meant the damage/death/game-over flow had never actually run, and a host leaving froze the arena with invulnerable zombies. Development builds log the numbers that guided the decisions (spawn cost, per-zombie path state, held-weapon authority, snap-turn hand error).
+Fixes were then prioritised with one rule -- *does it break the two-player experience on Quest?* -- and every one was verified in two-build sessions before moving on. The blockers it found: the game could not be replayed without restarting the app, random matchmaking put strangers in the same room, test values left in the scenes (`maxHealth = 10000`, one-player gates) meant the damage/death/game-over flow had never actually run, and a host leaving froze the arena with invulnerable zombies. Development builds with `VRZ_NET_DIAGNOSTICS` log the numbers that guided the decisions (spawn cost, per-zombie path state, held-weapon authority, snap-turn hand error).
 
 ## Design & Architecture Decisions
 
@@ -154,7 +154,7 @@ Fixes were then prioritised with one rule -- *does it break the two-player exper
 - In the editor: *Window > General > Test Runner > EditMode > Run All*, or the menu **VRZ > Run EditMode Tests** (`Assets/Editor/RunEditModeTests.cs`: a one-shot `TestRunnerApi` run that logs a `[Tests] DONE passed=... failed=...` summary and every failure with its stack trace -- handy for tooling that cannot drive the Test Runner window).
 - Headless (project closed in the editor): `Unity.exe -batchmode -projectPath . -runTests -testPlatform EditMode -assemblyNames VRZ.Tests.EditMode -testResults TestResults.xml`.
 
-**What is deliberately not unit-tested.** Networking (authority transfer, RPCs, replication, reconnection) and the feel of hands and held objects depend on a live Fusion session, AutoHand physics and the headset's frame rate. Those are verified in two-build and headset sessions against a checklist, reading the development-build logs listed under Setup.
+**What is deliberately not unit-tested.** Networking (authority transfer, RPCs, replication, reconnection) and the feel of hands and held objects depend on a live Fusion session, AutoHand physics and the headset's frame rate. Those are verified in two-build and headset sessions against a checklist, reading the diagnostics described under Setup.
 
 ## Project Structure (my code)
 
@@ -229,7 +229,9 @@ Scenes will show missing references until these are imported.
 5. Open `Assets/Scenes/LobbyScene` and press Play (or build two clients). One player chooses **Create Lobby** and reads out the two-digit room code; the other chooses **Join Lobby** and picks that room from the list. Both builds must share the same `Player Settings > Version`, because the room list is namespaced by it.
 6. For Meta Quest: switch the build target to Android (the "Quest" quality level, ASTC subtarget and Vulkan-only settings are already configured) and Build & Run.
 
-**Testing alone.** Add `VRZ_SOLO_TEST` (lobby and waves start with one player) and/or `VRZ_INVULNERABLE` to *Player Settings > Scripting Define Symbols*; a warning is logged at startup while they are active. Remove them before a real build. Development builds also log spawn cost (`[Waves] Spawn took`), per-zombie path state (`[Zombie N]`), held-rifle authority (`[NetGun] held`) and snap-turn hand/controller error (`[SnapTurnFix]`).
+**Testing alone.** Add `VRZ_SOLO_TEST` (lobby and waves start with one player) and/or `VRZ_INVULNERABLE` to *Player Settings > Scripting Define Symbols*; a warning is logged at startup while they are active. Remove them before a real build.
+
+**Netcode diagnostics.** Add `VRZ_NET_DIAGNOSTICS` to log spawn cost (`[Waves] Spawn took`), per-zombie path state (`[Zombie N]`), held-rifle authority (`[NetGun] held`) and the snap-turn hand/controller trace (`[SnapTurnFix]`). They are compiled out otherwise, even in development builds, so the console stays readable; anomaly warnings (a dropped weapon authority, a snap turn that did not rotate) are always on in development builds.
 
 **Testing with the editor as one client.** Fine for logic and networking, but let the *build* create the room (the master runs the zombie AI), and judge the feel of held objects only in builds: the editor at ~36 fps changes AutoHand's physics step.
 

@@ -28,6 +28,16 @@ namespace VRZ.Core
         public const bool Invulnerable = false;
 #endif
 
+        // VRZ_NET_DIAGNOSTICS: periodic netcode diagnostics ([Zombie N] path state, [Waves] Spawn took,
+        // [NetGun] held, [SnapTurnFix] hand-vs-controller trace). Off by default, even in development
+        // builds: they did their job during the hardening pass and would otherwise flood the console.
+        // The code sites use `#if VRZ_NET_DIAGNOSTICS` directly so the diagnostics compile out.
+#if VRZ_NET_DIAGNOSTICS
+        public const bool NetDiagnostics = true;
+#else
+        public const bool NetDiagnostics = false;
+#endif
+
         /// Player-count gates (lobby start, waves ready check) collapse to 1 in solo test mode.
         public static int MinPlayers(int configured) => SoloTest ? 1 : configured;
 
@@ -36,6 +46,7 @@ namespace VRZ.Core
         {
             if (SoloTest) Debug.LogWarning("[DevFlags] VRZ_SOLO_TEST is ON: lobby and waves start with 1 player.");
             if (Invulnerable) Debug.LogWarning("[DevFlags] VRZ_INVULNERABLE is ON: the local player takes no damage.");
+            if (NetDiagnostics) Debug.LogWarning("[DevFlags] VRZ_NET_DIAGNOSTICS is ON: periodic netcode diagnostics will be logged.");
         }
     }
 }

@@ -237,13 +237,13 @@ namespace VRZ.Enemies{
 
             // Measurement for the pooling decision (journal): how long the full prefab Instantiate
             // + Fusion attach takes on this device. Editor/dev builds only; compiled out otherwise.
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if VRZ_NET_DIAGNOSTICS
             var sw = System.Diagnostics.Stopwatch.StartNew();
 #endif
             // R7 cleanup: no inputAuthority argument. In Shared Mode the spawning client is the
             // State Authority; the PlayerRef the old call passed was never read by the zombie.
             var zombieObj = Runner.Spawn(zombiePrefab, pos, rot);
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if VRZ_NET_DIAGNOSTICS
             sw.Stop();
             Debug.Log("[Waves] Spawn took " + sw.Elapsed.TotalMilliseconds.ToString("F2") + " ms");
 #endif

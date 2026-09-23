@@ -76,7 +76,7 @@ namespace VRZ.Player
             Physics.SyncTransforms();
             SampleContainer(p);
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if VRZ_NET_DIAGNOSTICS
             // Diagnostic: hand body vs its controller target. After a correct turn this stays at its
             // normal few-cm; a whip shows as a large gap at t0 that closes over the next frames.
             var hand = p.handRight != null && p.handRight.holdingObj != null ? p.handRight : (p.handLeft != null && p.handLeft.holdingObj != null ? p.handLeft : null);
@@ -113,7 +113,7 @@ namespace VRZ.Player
             }
         }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if VRZ_NET_DIAGNOSTICS
         private System.Collections.IEnumerator TraceAfterTurn(Hand hand, float angle)
         {
             string Gap() => hand.follow == null ? "n/a"
