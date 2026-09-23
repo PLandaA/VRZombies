@@ -32,7 +32,7 @@ namespace VRZ.FX
 
         private void Start()
         {
-            if (spawner == null) spawner = FindFirstObjectByType<ZombieSpawner>();
+            if (spawner == null) spawner = ZombieSpawner.Current;   // self-registered (fix A8)
             if (spawner != null) spawner.OnWaveStarted.AddListener(w => _round = w);
             BuildPanel();
         }
@@ -72,6 +72,28 @@ namespace VRZ.FX
             _text.text = "";
         }
 
+        private IPlayerState _player;
+
+        private void OnDisable()
+        {
+            if (_player != null) { _player.OnHealthChanged -= OnHealthChanged; _player = null; }
+        }
+
+        /// Debt D4: the bar redraws on the replicated Health change (Fusion OnChangedRender),
+        /// not every 0.25 s. Score has no event and changes rarely; it stays on the slow poll.
+        private void OnHealthChanged(int health, int max)
+        {
+            if (_barFill == null) return;
+            // Netcode fix A3: divide by the player's real MaxHealth. A hard-coded 100 kept the bar
+            // full for any other max, which is how maxHealth = 10000 went unnoticed for weeks.
+            float pct = Mathf.Clamp01(health / (float)Mathf.Max(1, max));
+            var s = _barFill.localScale; s.x = 0.25f * pct; _barFill.localScale = s;
+            var p = _barFill.localPosition; p.x = -0.125f * (1f - pct); _barFill.localPosition = p;
+            if (_barFillRend != null)
+                _barFillRend.sharedMaterial.color = Color.Lerp(
+                    new Color(0.75f, 0.12f, 0.1f, 0.95f), new Color(0.25f, 0.7f, 0.25f, 0.95f), pct);
+        }
+
         private void LateUpdate()
         {
             var cam = Camera.main;
@@ -87,17 +109,15 @@ namespace VRZ.FX
             {
                 _nextTextRefresh = Time.time + 0.25f;
                 var np = NetworkSession.Current?.GetPlayer();
-                if (np != null && np.IsValid)
+                if (np != _player)
                 {
-                    float pct = Mathf.Clamp01(np.Health / 100f);
-                    var s = _barFill.localScale; s.x = 0.25f * pct; _barFill.localScale = s;
-                    var p = _barFill.localPosition; p.x = -0.125f * (1f - pct); _barFill.localPosition = p;
-                    if (_barFillRend != null)
-                        _barFillRend.sharedMaterial.color = Color.Lerp(
-                            new Color(0.75f, 0.12f, 0.1f, 0.95f), new Color(0.25f, 0.7f, 0.25f, 0.95f), pct);
-
-                    _text.text = np.TotalScore + " PTS" + (_round > 0 ? "    R" + _round : "");
+                    // Bind to the (new) local player; the reference changes after a game over.
+                    if (_player != null) _player.OnHealthChanged -= OnHealthChanged;
+                    _player = np;
+                    if (_player != null) { _player.OnHealthChanged += OnHealthChanged; OnHealthChanged(_player.Health, _player.MaxHealth); }
                 }
+                if (np != null && np.IsValid)
+                    _text.text = np.TotalScore + " PTS" + (_round > 0 ? "    R" + _round : "");
             }
         }
     }

@@ -41,6 +41,19 @@ namespace VRZ.FX
             _zombie = GetComponent<NetworkZombie>();
         }
 
+        private void OnEnable()  { if (_zombie != null) _zombie.OnLocalReset += ResetForNewLife; }
+        private void OnDisable() { if (_zombie != null) _zombie.OnLocalReset -= ResetForNewLife; }
+
+        /// Pool readiness: a re-spawned zombie must be able to play its death pop again and must
+        /// not "punch" on its first health read.
+        private void ResetForNewLife()
+        {
+            _lastHealth = int.MinValue;
+            _deathPlayed = false;
+            (hitPlayerOverride != null ? hitPlayerOverride : _hitPlayer)?.StopFeedbacks();
+            (deathPlayerOverride != null ? deathPlayerOverride : _deathPlayer)?.StopFeedbacks();
+        }
+
         private void Start()
         {
             if (hitPlayerOverride == null)

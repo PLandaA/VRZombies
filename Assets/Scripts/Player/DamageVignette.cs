@@ -144,9 +144,26 @@ namespace VRZ.Player
             _dirPulse = 1f;
         }
 
+        /// From the replicated Health (Fusion OnChangedRender), once per change instead of once
+        /// per frame. Drives the damage pulse and jolt; the heartbeat floor reads _lastHealth.
+        private void OnHealthChanged(int health, int max)
+        {
+            if (_lastHealth != int.MinValue && health < _lastHealth)
+            {
+                float dmg01 = Mathf.Clamp01((_lastHealth - health) / 40f);    // 40 dmg = full pulse
+                _pulse = Mathf.Max(_pulse, Mathf.Lerp(0.35f, 1f, dmg01));
+                Jolt();
+            }
+            _lastHealth = health;
+        }
+
         private void OnDestroy()
         {
-            if (_localPlayer != null && _subscribed) _localPlayer.OnDamagedFrom -= OnDamagedFrom;
+            if (_localPlayer != null && _subscribed)
+            {
+                _localPlayer.OnDamagedFrom -= OnDamagedFrom;
+                _localPlayer.OnHealthChanged -= OnHealthChanged;
+            }
         }
 
         /// Radial texture: transparent center, opaque edges (the vignette shape).
@@ -187,21 +204,14 @@ namespace VRZ.Player
             if (!_subscribed)
             {
                 _localPlayer.OnDamagedFrom += OnDamagedFrom;
+                _localPlayer.OnHealthChanged += OnHealthChanged;   // debt D4: event, not polling
+                _lastHealth = _localPlayer.Health;
                 _subscribed = true;
             }
 
             UpdateDirectionArc();
 
-            int h = _localPlayer.Health;
-            if (_lastHealth == int.MinValue) _lastHealth = h;
-
-            if (h < _lastHealth)
-            {
-                float dmg01 = Mathf.Clamp01((_lastHealth - h) / 40f);    // 40 dmg = full pulse
-                _pulse = Mathf.Max(_pulse, Mathf.Lerp(0.35f, 1f, dmg01));
-                Jolt();
-            }
-            _lastHealth = h;
+            int h = _lastHealth;   // kept current by OnHealthChanged; used for the low-health floor below
 
             // Compose: damage pulse decays + low-health heartbeat floor
             _pulse = Mathf.Max(0f, _pulse - Time.deltaTime / Mathf.Max(0.05f, pulseFadeTime));

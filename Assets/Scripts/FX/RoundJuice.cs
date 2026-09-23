@@ -40,7 +40,7 @@ namespace VRZ.FX
             _intense = MakeLayer(intenseLayer);
             if (_intense != null) _intense.volume = 0f;
 
-            if (spawner == null) spawner = FindFirstObjectByType<ZombieSpawner>();
+            if (spawner == null) spawner = ZombieSpawner.Current;   // self-registered (fix A8)
             if (spawner != null)
             {
                 spawner.OnWaveStarted.AddListener(OnWaveStarted);

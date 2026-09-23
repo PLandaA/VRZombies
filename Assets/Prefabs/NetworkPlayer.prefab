@@ -46,7 +46,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _TotalScore: 0
+  _Kills: 0
+  _HeadshotKills: 0
   _Ready:
+    _value: 0
+  _TutorialDone:
     _value: 0
   maxHealth: 100
   _Health: 0

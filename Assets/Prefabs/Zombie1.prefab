@@ -413,72 +413,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 55136041078773669}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1400809218601363253
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2391363690194858731}
-  - component: {fileID: 2618504590527643069}
-  - component: {fileID: 7383015033911068801}
-  m_Layer: 0
-  m_Name: HeadshotHitbox
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2391363690194858731
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1400809218601363253}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8195457672599474506}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!135 &2618504590527643069
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1400809218601363253}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.16
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &7383015033911068801
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1400809218601363253}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cabbf5104c8c3eb47a8cf5ea85e3fd0d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HeadshotHitbox
 --- !u!1 &1439322468301247014
 GameObject:
   m_ObjectHideFlags: 0
@@ -738,7 +672,6 @@ Transform:
   - {fileID: 6531877577849988540}
   - {fileID: 3908521375782837321}
   - {fileID: 6823160596983528529}
-  - {fileID: 2391363690194858731}
   m_Father: {fileID: 8804205604038411060}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1918587762329072105
@@ -1921,7 +1854,7 @@ NavMeshAgent:
   m_GameObject: {fileID: 4493914613880827488}
   m_Enabled: 1
   m_AgentTypeID: 0
-  m_Radius: 0.35
+  m_Radius: 0.5
   m_Speed: 3.5
   m_Acceleration: 12
   avoidancePriority: 50
@@ -2020,7 +1953,7 @@ MonoBehaviour:
   SyncScale: 0
   SyncParent: 0
   _autoAOIOverride: 1
-  DisableSharedModeInterpolation: 0
+  DisableSharedModeInterpolation: 1
 --- !u!114 &3352627376667483931
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2126,8 +2059,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0e8f4897e81cbc4d942b1d5c445cbc6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZombieJuice
-  killPoints: 10
-  headshotPoints: 25
   bloodPrefabOverride: {fileID: 4425269632102290907, guid: 5a98b06ecb8f96a4facd5bf59ad1d2a3, type: 3}
   bloodColor: {r: 0.45, g: 0.03, b: 0.03, a: 0.9}
 --- !u!1 &4710940672626480558

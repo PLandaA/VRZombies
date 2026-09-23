@@ -11,13 +11,15 @@ using VRZ.World;
 namespace VRZ.FX
 {
 
-    /// Death celebration: blood puff + floating score popup ("+10" / "+25 HEADSHOT"). Death
-    /// sounds live natively in NetworkZombie. Subscribes to OnDiedRender: every client sees it.
+    /// Death celebration: blood puff on every client + floating score popup ("+10" / "+25 HEADSHOT")
+    /// only on the killer's client (netcode fix A5: the zombie's replicated LastDamager decides).
+    /// Death sounds live natively in NetworkZombie. Subscribes to OnDiedRender.
     public class ZombieJuice : MonoBehaviour
     {
-        [Header("Score")]
-        [SerializeField] private int killPoints = 10;
-        [SerializeField] private int headshotPoints = 25;
+        // Points come from ScoreEvents (single source of truth) so the popup can never disagree
+        // with what the scoreboard actually adds.
+        private static int KillPoints => ScoreEvents.KillPoints;
+        private static int HeadshotPoints => ScoreEvents.HeadshotPoints;
 
         [Header("Blood Puff")]
         [Tooltip("Optional: your own blood VFX prefab. When assigned it replaces the procedural puff.")]
@@ -35,7 +37,8 @@ namespace VRZ.FX
         {
             Vector3 pos = transform.position + Vector3.up * 1.3f;
             BloodPuff(pos);
-            SpawnPopup(pos + Vector3.up * 0.4f, headshot);
+            if (_zombie != null && _zombie.KilledByLocalPlayer)
+                SpawnPopup(pos + Vector3.up * 0.4f, headshot);
         }
 
         private void BloodPuff(Vector3 pos)
@@ -86,7 +89,7 @@ namespace VRZ.FX
         private void SpawnPopup(Vector3 pos, bool headshot)
         {
             PopupText.Spawn(pos,
-                headshot ? "+" + headshotPoints + "\n<size=55%>HEADSHOT!</size>" : "+" + killPoints,
+                headshot ? "+" + HeadshotPoints + "\n<size=55%>HEADSHOT!</size>" : "+" + KillPoints,
                 headshot ? new Color(1f, 0.75f, 0.15f) : new Color(1f, 0.95f, 0.8f),
                 headshot ? 2.6f : 2.1f);
         }

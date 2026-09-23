@@ -18,6 +18,14 @@ namespace VRZ.Core
 
         /// Fired on the owning client when damage arrives, with the attacker's position.
         event System.Action<Vector3> OnDamagedFrom;
+
+        /// Fired on every client (owner and proxies) when the replicated Health changes, from
+        /// Fusion's OnChangedRender. Presentation should subscribe to this instead of polling
+        /// Health every frame (netcode debt D4). Arguments: (health, maxHealth).
+        event System.Action<int, int> OnHealthChanged;
+
+        /// Fired on every client when the replicated IsDead flips to true (Fusion OnChangedRender).
+        event System.Action OnDied;
     }
 
     /// What GAMEPLAY and FEEDBACK code is allowed to know about the network session: who is

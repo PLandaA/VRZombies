@@ -17,11 +17,23 @@ namespace VRZ.Weapons
     /// Networked rifle: tick-synced shot effects and shooter-authoritative hit damage over Fusion 2 Shared Mode.
     public class NetworkAutoGun : NetworkBehaviour
     {
-        [Networked] public int NetworkedAmmo { get; private set; }
+        // NetworkedAmmo removed (netcode debt #5): it mirrored the magazine's count, which
+        // NetworkAutoAmmo already replicates, and nothing ever read it.
         [Networked] private int LastShootTick { get; set; }
         [Networked] private Vector3 SlideLocalPosition { get; set; }
         [Networked, OnChangedRender(nameof(OnLoadedMagChanged))]
         public NetworkBehaviourId LoadedMagId { get; private set; }
+
+        /// Round in the chamber (AutoGun.slideLoaded), replicated (2026-09-21). AutoHand keeps it
+        /// as a private per-client flag, so a rifle racked by player A and picked up by player B
+        /// would not fire on B until B racked it again. The owner mirrors the flag each tick;
+        /// proxies copy it into their AutoGun by reflection, so whoever takes authority next
+        /// already has the right chamber state. We cannot call LoadSlide(): it consumes a round.
+        [Networked, OnChangedRender(nameof(OnChamberedChanged))]
+        private NetworkBool Chambered { get; set; }
+
+        private static readonly FieldInfo SlideLoadedField =
+            typeof(AutoGun).GetField("slideLoaded", BindingFlags.NonPublic | BindingFlags.Instance);
 
         [Header("Slide")]
         [SerializeField] private Transform slideTransform;
@@ -37,8 +49,6 @@ namespace VRZ.Weapons
         private WeaponFeel _feel;
         private BulletTracer _tracer;
 
-        public int GetNetworkedAmmo() => NetworkedAmmo;
-
         private void Awake()
         {
             _gun = GetComponent<AutoGun>();
@@ -46,6 +56,15 @@ namespace VRZ.Weapons
             _grabbable = GetComponent<Grabbable>();
             _feel = GetComponent<WeaponFeel>();
             _tracer = GetComponent<BulletTracer>();
+
+            // Feel fix (2026-09-20, "rifle rotates in snappy jumps while the empty hand is smooth"):
+            // every Rigidbody starts with maxAngularVelocity = 7 rad/s (~400 deg/s). A VR wrist
+            // flick exceeds that, and the rifle hangs off a joint, so it lagged behind the hand and
+            // caught up in one jump. 40 was too much: grabbing by the front grip (long lever to the
+            // centre of mass) made the joint oscillate violently. 15 rad/s (~860 deg/s) covers a
+            // fast wrist turn without letting the joint ring.
+            var body = GetComponent<Rigidbody>();
+            if (body != null) body.maxAngularVelocity = 15f;
 
             // Self-wire: the serialized slideTransform historically pointed at the rifle root,
             // which made the remote slide-lerp fight the root NetworkRigidbody3D. Find the real slide.
@@ -79,12 +98,57 @@ namespace VRZ.Weapons
             }
             if (Object.HasStateAuthority)
             {
-                NetworkedAmmo = _gun.GetAmmo();
                 if (slideTransform != null)
                     SlideLocalPosition = slideTransform.localPosition;
+                Chambered = _gun.IsSlideLoaded();
+            }
+            else
+            {
+                OnChamberedChanged();   // proxies: take the owner's chamber state from the start
             }
             OnLoadedMagChanged();
             base.Spawned();
+        }
+
+        /// Proxies mirror the owner's chamber flag into their own AutoGun (see Chambered).
+        private void OnChamberedChanged()
+        {
+            if (Object.HasStateAuthority || _gun == null || SlideLoadedField == null) return;
+            if (_gun.IsSlideLoaded() != (bool)Chambered)
+                SlideLoadedField.SetValue(_gun, (bool)Chambered);
+        }
+
+        // ── Held-without-authority watchdog (2026-09-21, "rifle shakes violently in the
+        // NON-master's hands"). If our authority request was dropped, the hand joint pulls the
+        // rifle one way while NetworkRigidbody3D (proxy) snaps it back to the owner's pose every
+        // frame: exactly a violent shake. Keep asking while we hold it, and say so in the log.
+        private float _nextAuthorityRetry, _nextHeldLog;
+
+        private void Update()
+        {
+            if (Object == null || !Object.IsValid || _grabbable == null) return;
+            bool heldLocally = _grabbable.IsHeld();
+            if (!heldLocally) return;
+
+            if (!Object.HasStateAuthority && Time.time >= _nextAuthorityRetry)
+            {
+                _nextAuthorityRetry = Time.time + 0.5f;
+                Object.RequestStateAuthority();
+                Debug.LogWarning("[NetGun] Held but no State Authority (owner=" + Object.StateAuthority + "): re-requesting.");
+            }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (Time.time >= _nextHeldLog)
+            {
+                _nextHeldLog = Time.time + 1f;
+                var hand = _grabbable.GetHeldBy() != null && _grabbable.GetHeldBy().Count > 0 ? _grabbable.GetHeldBy()[0] : null;
+                var body = _grabbable.body;
+                string gap = (hand != null && body != null)
+                    ? (Vector3.Distance(body.position, hand.handGrabPoint.position) * 100f).ToString("F1") + " cm"
+                    : "n/a";
+                Debug.Log("[NetGun] held: authority=" + Object.HasStateAuthority + " owner=" + Object.StateAuthority + " master=" + Runner.IsSharedModeMasterClient + " body-hand gap=" + gap + " kinematic=" + (body != null && body.isKinematic));
+            }
+#endif
         }
 
         public override void Despawned(NetworkRunner runner, bool hasState)
@@ -108,10 +172,12 @@ namespace VRZ.Weapons
         {
             if (Object.HasStateAuthority)
             {
-                if (NetworkedAmmo != _gun.GetAmmo())
-                    NetworkedAmmo = _gun.GetAmmo();
                 if (slideTransform != null && SlideLocalPosition != slideTransform.localPosition)
                     SlideLocalPosition = slideTransform.localPosition;
+                // Owner is the source of truth for the chamber; a proxy that just took authority
+                // already has the right flag (OnChamberedChanged), so this is a no-op for it.
+                bool loaded = _gun.IsSlideLoaded();
+                if ((bool)Chambered != loaded) Chambered = loaded;
             }
             base.FixedUpdateNetwork();
         }
@@ -181,17 +247,12 @@ namespace VRZ.Weapons
 
         private void OnLocalAmmoPlace(AutoGun gun, AutoAmmo ammo)
         {
-            string ammoName = ammo != null ? ammo.name : "null";
-            Debug.Log("[NetGun] OnLocalAmmoPlace ammo=" + ammoName + " HasGunAuth=" + Object.HasStateAuthority);
             if (ammo == null) return;
             var netAmmo = ammo.GetComponent<NetworkAutoAmmo>();
-            if (netAmmo == null) { Debug.Log("[NetGun] No NetworkAutoAmmo on ammo"); return; }
+            if (netAmmo == null) { Debug.LogWarning("[NetGun] Placed ammo has no NetworkAutoAmmo: " + ammo.name); return; }
             netAmmo.Object.RequestStateAuthority();
             if (Object.HasStateAuthority)
-            {
                 LoadedMagId = netAmmo.Id;
-                Debug.Log("[NetGun] LoadedMagId set");
-            }
         }
 
         private void OnLocalAmmoRemove(AutoGun gun, AutoAmmo ammo)
@@ -200,22 +261,49 @@ namespace VRZ.Weapons
                 LoadedMagId = default;
         }
 
+        /// The magazine this client parented under the magazine point (proxies only; the owner's
+        /// magazine is parented by AutoHand's PlacePoint). Needed to UNparent it on removal.
+        private Transform _parentedMag;
+
         private void OnLoadedMagChanged()
         {
             Transform magPP = (_gun != null && _gun.magazinePoint != null) ? _gun.magazinePoint.transform : null;
-            Debug.Log("[NetGun] OnLoadedMagChanged IsValid=" + LoadedMagId.IsValid + " magPP=" + (magPP!=null?magPP.name:"NULL"));
-            if (!LoadedMagId.IsValid || Runner == null || magPP == null) return;
-            if (!Runner.TryFindBehaviour(LoadedMagId, out NetworkBehaviour magBeh)) { Debug.Log("[NetGun] TryFindBehaviour FAILED"); return; }
-            Debug.Log("[NetGun] Parenting mag " + magBeh.name + " to " + magPP.name);
-            magBeh.transform.SetParent(magPP, true);
-            magBeh.transform.localPosition = Vector3.zero;
-            magBeh.transform.localRotation = Quaternion.identity;
+
+            if (!LoadedMagId.IsValid || Runner == null || magPP == null)
+            {
+                // Bug fix (2026-09-21, "ghost magazine somewhere else in the map, cannot be grabbed"):
+                // the mag was ejected on the owner but proxies kept it parented under this rifle.
+                // NetworkTransform (SyncParent off) replicates LOCAL coordinates, so the owner's
+                // world position was being applied as a local offset from the magazine point:
+                // the proxy mag rendered at rifle + world coords, re-pinned there every frame.
+                UnparentMag();
+                return;
+            }
+            if (!Runner.TryFindBehaviour(LoadedMagId, out NetworkBehaviour magBeh)) { Debug.LogWarning("[NetGun] LoadedMagId set but behaviour not found"); return; }
+
+            if (_parentedMag != null && _parentedMag != magBeh.transform) UnparentMag();   // a different mag replaced the old one
+            if (!Object.HasStateAuthority)
+            {
+                // Proxies only: the owner's mag is already parented by AutoHand's PlacePoint.
+                magBeh.transform.SetParent(magPP, true);
+                magBeh.transform.localPosition = Vector3.zero;
+                magBeh.transform.localRotation = Quaternion.identity;
+                _parentedMag = magBeh.transform;
+            }
             var autoAmmo = magBeh.GetComponent<AutoAmmo>();
             if (autoAmmo != null && _gun != null)
             {
                 var field = typeof(AutoGun).GetField("loadedAmmo", BindingFlags.NonPublic | BindingFlags.Instance);
                 if (field != null) field.SetValue(_gun, autoAmmo);
             }
+        }
+
+        private void UnparentMag()
+        {
+            if (_parentedMag == null) return;
+            // Keep world pose: NetworkTransform's next Render brings it to the owner's real place.
+            if (_parentedMag.parent != null) _parentedMag.SetParent(null, true);
+            _parentedMag = null;
         }
 
         private void OnLocalHit(AutoGun gun, RaycastHit hit)
@@ -233,10 +321,10 @@ namespace VRZ.Weapons
             {
                 bool critical = target.IsCriticalHit(hit.point);
                 int dmg = critical ? bulletDamage * 2 : bulletDamage;
-                bool killingBlow = target.Health <= dmg;   // predicted from replicated health
+                // Netcode fix A5: no kill prediction here. The zombie's State Authority decides
+                // who killed it (LastDamager) and NetworkZombie.Render credits the local player.
                 target.ApplyDamage(new DamageInfo(dmg, hit.point, _gun.shootForward.position, critical));
                 if (_feel != null) _feel.PlayHitmarker(critical);
-                if (killingBlow) ScoreEvents.RegisterKill(critical, target.Position);
             }
         }
 

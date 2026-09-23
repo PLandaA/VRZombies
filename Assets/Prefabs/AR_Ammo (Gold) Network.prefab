@@ -200,6 +200,7 @@ GameObject:
   - component: {fileID: 3902903142254287627}
   - component: {fileID: 6709795942867822601}
   - component: {fileID: 5857397976083796357}
+  - component: {fileID: 8387335443805857435}
   m_Layer: 0
   m_Name: AR_Ammo (Gold) Network
   m_TagString: Untagged
@@ -461,7 +462,7 @@ MonoBehaviour:
   SyncScale: 0
   SyncParent: 0
   _autoAOIOverride: 1
-  DisableSharedModeInterpolation: 0
+  DisableSharedModeInterpolation: 1
 --- !u!114 &5857397976083796357
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -475,3 +476,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FloatingWeapon
   floatDamping: 4
+--- !u!114 &8387335443805857435
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5417052206122726637}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21188fa081af42345af95b3dcbc9a9d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VRZ.Weapons.KeepWorldParentWhileHeld

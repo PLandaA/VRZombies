@@ -14,7 +14,8 @@ namespace VRZ.Weapons
 
     [RequireComponent(typeof(Grabbable))]
     [RequireComponent(typeof(NetworkObject))]
-    /// Networked belt grenade (Fusion 2 Shared Mode): arms when thrown (released off the belt),
+    /// Networked belt grenade (Fusion 2 Shared Mode): personal to the client that spawned it
+    /// (the partner cannot grab it), arms when thrown (released off the belt),
     /// synced fuse via TickTimer, authoritative radius damage to zombies/players, explosion FX on every client.
     public class NetworkGrenade : NetworkBehaviour
     {
@@ -68,6 +69,13 @@ namespace VRZ.Weapons
             _grabbable.OnGrabEvent += OnGrabbed;
             _grabbable.OnReleaseEvent += OnReleased;
 
+            // Netcode fix A4: grenades are personal. Only the client that spawned this one (its
+            // State Authority) may grab it; the partner's hands ignore it (no highlight, no grab,
+            // no distance grab). AutoHand checks this flag in Grabbable.CanGrab, which every grab
+            // path goes through. The prefab has no AllowStateAuthorityOverride, so authority can
+            // never move: deciding once here is enough.
+            _grabbable.isGrabbable = Object.HasStateAuthority;
+
             // Late joiner or state already exploded before we spawned locally
             if (Exploded) HideVisuals();
             base.Spawned();
@@ -78,21 +86,26 @@ namespace VRZ.Weapons
             _grabbable.OnBeforeGrabEvent -= OnBeforeGrabbed;
             _grabbable.OnGrabEvent -= OnGrabbed;
             _grabbable.OnReleaseEvent -= OnReleased;
+            // Detach from the belt PlacePoint while still alive (see NetworkAutoAmmo.Despawned).
+            if (_grabbable.placePoint != null)
+                _grabbable.placePoint.Remove(_grabbable);
             base.Despawned(runner, hasState);
         }
 
-        // ── Authority on grab (same pattern as NetworkAutoAmmo / NetworkAutoGun) ──
+        // ── Grab: only ever runs on the owner (see Spawned) ──────────────────────────────
 
         private void OnBeforeGrabbed(Hand hand, Grabbable grabbable)
         {
-            Object.RequestStateAuthority();
+            // The belt PlacePoint made the body kinematic while parked; free it for the hand joint.
             if (_grabbable.body != null)
                 _grabbable.body.isKinematic = false;
         }
 
         private void OnGrabbed(Hand hand, Grabbable grabbable)
         {
-            Object.RequestStateAuthority();
+            // Nothing to do: the owner already holds State Authority. The old
+            // RequestStateAuthority() here could never succeed for anyone else anyway (the
+            // prefab does not allow authority override) and only masked the problem.
         }
 
         private void OnReleased(Hand hand, Grabbable grabbable)
@@ -145,9 +158,8 @@ namespace VRZ.Weapons
 
                 float dist = Vector3.Distance(target.Position, transform.position);
                 int dmg = Mathf.RoundToInt(Mathf.Lerp(zombieDamage, zombieDamage * 0.25f, Mathf.Clamp01(dist / explosionRadius)));
-                bool killingBlow = target.Health <= dmg;
+                // Netcode fix A5: no kill prediction; the victim's State Authority names the killer.
                 target.ApplyDamage(new DamageInfo(dmg, target.Position, transform.position));
-                if (killingBlow) ScoreEvents.RegisterKill(false, target.Position);
             }
 
             var session = NetworkSession.Current;
@@ -157,14 +169,19 @@ namespace VRZ.Weapons
             DamagePlayerIfInRange(session.GetPlayer(),
                 AutoHandPlayer.Instance != null ? AutoHandPlayer.Instance.transform : null);
 
-            // Remote avatars
-            foreach (var rig in FindObjectsByType<NetworkRig>(FindObjectsSortMode.None))
+            // Remote avatars, from the registry (debt D3: no scene scan per explosion)
+            var nm = NetworkManager.instance;
+            if (nm == null) return;
+            foreach (var rig in nm.Rigs)
             {
-                if (rig.Object == null || !rig.Object.IsValid) continue;
+                if (rig == null || rig.Object == null || !rig.Object.IsValid) continue;
                 bool isLocal = rig.Object.StateAuthority == Runner.LocalPlayer ||
                                rig.Object.InputAuthority == Runner.LocalPlayer;
                 if (isLocal) continue;
-                DamagePlayerIfInRange(session.GetPlayer(rig.Object.InputAuthority), rig.transform);
+                // InputAuthority is set by Runner.Spawn(..., playerRef) in MapDefault; fall back to
+                // StateAuthority like NetworkZombie.ResolveNetworkPlayer does, just in case.
+                var owner = rig.Object.InputAuthority != PlayerRef.None ? rig.Object.InputAuthority : rig.Object.StateAuthority;
+                DamagePlayerIfInRange(session.GetPlayer(owner), rig.transform);
             }
         }
 

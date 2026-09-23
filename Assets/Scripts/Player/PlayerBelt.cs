@@ -45,6 +45,9 @@ namespace VRZ.Player
         private ZombieSpawner _waveSystem;
         private int _spawnedThisRound;
 
+        /// Grenades this belt spawned and still owns (for the safety net in LateUpdate).
+        private readonly System.Collections.Generic.List<Grabbable> _mine = new();
+
         private void Start()
         {
             StartCoroutine(InitialStock());
@@ -58,6 +61,15 @@ namespace VRZ.Player
 
         private IEnumerator InitialStock()
         {
+            // The belt only makes sense in the arena. With the local character unified into one
+            // prefab (R11), this component also lives in the lobby, where there is no wave system:
+            // stay idle there instead of spawning two grenades next to the tutorial.
+            if (ZombieSpawner.Current == null)
+            {
+                Debug.Log("[PlayerBelt] No ZombieSpawner in this scene: belt idle.");
+                yield break;
+            }
+
             // Wait for the Fusion session to be up
             while (_runner == null || !_runner.IsRunning)
             {
@@ -68,7 +80,7 @@ namespace VRZ.Player
             // Small settle delay so PlacePoints and physics are ready
             yield return new WaitForSeconds(1f);
 
-            _waveSystem = FindFirstObjectByType<ZombieSpawner>();
+            _waveSystem = ZombieSpawner.Current;   // self-registered (fix A8)
             if (_waveSystem != null)
                 _waveSystem.OnIntermissionStarted.AddListener(OnIntermission);
             else
@@ -104,7 +116,10 @@ namespace VRZ.Player
 
                 var grab = no.GetComponent<Grabbable>();
                 if (grab != null)
+                {
                     pp.Place(grab);
+                    _mine.Add(grab);
+                }
                 spawned++;
                 _spawnedThisRound++;
             }
@@ -139,7 +154,59 @@ namespace VRZ.Player
                 if (pp == null) continue;
                 var placed = pp.GetPlacedObject();
                 if (placed == null) continue;
+
+                // Move the PHYSICS pose too (2026-09-21, "ghost grenade in the middle of the map"):
+                // PlacePoint.CheckPlaceObjectLoop releases a placed object whose Rigidbody no longer
+                // overlaps the point (10 cm). Writing only the transform leaves the collider one
+                // physics step behind; a snap turn or a quick step put it out of range, AutoHand
+                // un-placed the grenade and it fell where the player had been. Rigidbody.position on
+                // a kinematic body updates the physics pose immediately, so the overlap test holds.
+                var body = placed.body;
+                if (body != null)
+                {
+                    body.position = pp.transform.position;
+                    body.rotation = pp.transform.rotation;
+                }
                 placed.rootTransform.SetPositionAndRotation(pp.transform.position, pp.transform.rotation);
+            }
+
+            RecoverDroppedGrenades();
+        }
+
+        /// Safety net: a belt grenade that is not placed, not in a hand and not armed was not
+        /// thrown (throwing arms it 0.25 s after release); AutoHand let go of it. Put it back on an
+        /// empty PlacePoint instead of leaving a dud on the floor for the partner to stare at.
+        ///
+        /// Grace period (bug 2026-09-21, "thrown grenades came back to the belt"): a grenade that
+        /// was JUST released also matches all three conditions until ArmIfThrown runs. Only act
+        /// once it has been loose for longer than the arming delay, with margin.
+        private const float LooseGraceSeconds = 1.5f;
+        private readonly System.Collections.Generic.Dictionary<Grabbable, float> _looseSince = new();
+
+        private void RecoverDroppedGrenades()
+        {
+            for (int i = _mine.Count - 1; i >= 0; i--)
+            {
+                var grab = _mine[i];
+                if (grab == null) { _mine.RemoveAt(i); _looseSince.Remove(grab); continue; }   // exploded / despawned
+                if (grab.placePoint != null || grab.IsHeld()) { _looseSince.Remove(grab); continue; }   // where it should be
+
+                var nade = grab.GetComponent<VRZ.Weapons.NetworkGrenade>();
+                if (nade == null || !nade.Object || !nade.Object.IsValid) { _mine.RemoveAt(i); _looseSince.Remove(grab); continue; }
+                if (nade.Armed || nade.Exploded) { _mine.RemoveAt(i); _looseSince.Remove(grab); continue; }   // thrown: not ours to touch
+
+                if (!_looseSince.TryGetValue(grab, out float since)) { _looseSince[grab] = Time.time; continue; }
+                if (Time.time - since < LooseGraceSeconds) continue;   // may still be arming
+
+                foreach (var pp in placePoints)
+                {
+                    if (pp == null || pp.GetPlacedObject() != null) continue;
+                    Debug.LogWarning("[PlayerBelt] Grenade came loose (not thrown); re-placing it on " + pp.name + ".");
+                    if (grab.body != null) { grab.body.linearVelocity = Vector3.zero; grab.body.angularVelocity = Vector3.zero; }
+                    pp.Place(grab);
+                    _looseSince.Remove(grab);
+                    break;
+                }
             }
         }
     }

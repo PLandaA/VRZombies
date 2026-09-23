@@ -142,8 +142,19 @@ namespace VRZ.Player
             _vrik = GetComponentInChildren<RootMotion.FinalIK.VRIK>(true);
             if (_vrik == null)
                 Debug.LogWarning("[NetworkRig] No VRIK component found on the avatar!");
+            // Debt D3: register so zombies/grenades never scan the scene for avatars. Registry
+            // only; does not touch the pose pipeline (the tick layer below is the committed one).
+            if (VRZ.Network.NetworkManager.instance != null)
+                VRZ.Network.NetworkManager.instance.RegisterRig(this);
 
             base.Spawned();
+        }
+
+        public override void Despawned(NetworkRunner runner, bool hasState)
+        {
+            if (VRZ.Network.NetworkManager.instance != null)
+                VRZ.Network.NetworkManager.instance.UnregisterRig(this);
+            base.Despawned(runner, hasState);
         }
 
         public override void FixedUpdateNetwork()

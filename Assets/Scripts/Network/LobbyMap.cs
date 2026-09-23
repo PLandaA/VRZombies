@@ -15,11 +15,15 @@ namespace VRZ.Network
     {
         private void Start()
         {
-            NetworkManager.instance.onPlayerSpawn += SpawnCharacter;
+            if (NetworkManager.instance != null)
+                NetworkManager.instance.onPlayerSpawn += SpawnCharacter;
         }
         private void OnDisable()
         {
-            NetworkManager.instance.onPlayerSpawn -= SpawnCharacter;
+            // The manager destroys itself on shutdown (fix B1), so it can be gone by the time this
+            // scene unloads or Play stops. GameMap already guarded this; LobbyMap did not.
+            if (NetworkManager.instance != null)
+                NetworkManager.instance.onPlayerSpawn -= SpawnCharacter;
         }
 
     }

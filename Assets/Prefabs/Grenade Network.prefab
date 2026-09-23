@@ -196,6 +196,8 @@ GameObject:
   - component: {fileID: 2267608036536105850}
   - component: {fileID: 7524765950566284622}
   - component: {fileID: 2958731824951392718}
+  - component: {fileID: 7071694515074881543}
+  - component: {fileID: 8961996829594281022}
   m_Layer: 7
   m_Name: Grenade Network
   m_TagString: Untagged
@@ -394,3 +396,29 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.055
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &7071694515074881543
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7351458117211829661}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5ff0d0c1068e094c8fa4ca2fe30488f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VRZ.World.CollisionGroupIgnore
+  group: 1
+  ignores: 00000000
+--- !u!114 &8961996829594281022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7351458117211829661}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21188fa081af42345af95b3dcbc9a9d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VRZ.Weapons.KeepWorldParentWhileHeld

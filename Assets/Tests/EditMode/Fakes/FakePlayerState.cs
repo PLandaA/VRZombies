@@ -21,6 +21,8 @@ namespace VRZ.Tests.Fakes
         public bool IsAlive => Health > 0;
 
         public event Action<Vector3> OnDamagedFrom;
+        public event Action<int, int> OnHealthChanged;
+        public event Action OnDied;
 
         public bool IsCriticalHit(Vector3 hitPoint) => false;
 
@@ -28,6 +30,8 @@ namespace VRZ.Tests.Fakes
         {
             Health = Mathf.Max(0, Health - damage.Amount);
             OnDamagedFrom?.Invoke(damage.SourcePosition);
+            OnHealthChanged?.Invoke(Health, MaxHealth);
+            if (Health <= 0) OnDied?.Invoke();
         }
     }
 }

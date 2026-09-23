@@ -33,6 +33,17 @@ namespace VRZ.Enemies
             _mpb = new MaterialPropertyBlock();
         }
 
+        private void OnEnable()  { if (_zombie != null) _zombie.OnLocalReset += ResetForNewLife; }
+        private void OnDisable() { if (_zombie != null) _zombie.OnLocalReset -= ResetForNewLife; }
+
+        /// Pool readiness: forget the previous life's health and drop any red tint still showing.
+        private void ResetForNewLife()
+        {
+            _lastHealth = int.MinValue;
+            _timer = 0f;
+            ClearTint();
+        }
+
         private void Update()
         {
             if (_zombie != null && _zombie.Object != null && _zombie.Object.IsValid)

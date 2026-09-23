@@ -34,7 +34,7 @@ namespace VRZ.Player
         [Header("Health")]
         [SerializeField] private int maxHealth = 100;
 
-        [Networked, OnChangedRender(nameof(OnHealthChanged))]
+        [Networked, OnChangedRender(nameof(OnHealthChangedRender))]
         public int Health { get; private set; }
 
         [Networked, OnChangedRender(nameof(OnDeathChanged))]
@@ -67,10 +67,20 @@ namespace VRZ.Player
         /// damage indicator -- in VR you have no rear peripheral vision to tell you who bit you.
         public event System.Action<Vector3> OnDamagedFrom;
 
+        /// IPlayerState.OnHealthChanged: C# event mirror of the OnHealthChangedEvent UnityEvent,
+        /// raised from Fusion's OnChangedRender on every client (debt D4: readers stop polling).
+        public event System.Action<int, int> OnHealthChanged;
+
+        /// IPlayerState.OnDied: C# mirror of OnDiedEvent (raised from the IsDead OnChangedRender).
+        public event System.Action OnDied;
+
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
         public void RPC_TakeDamage(int amount, Vector3 attackerPos = default)
         {
             if (IsDead) return;
+            // Testing without dying is a compile-time switch (Core/DevFlags.cs), not a 10000-HP
+            // prefab. Health/MaxHealth stay real so the HUD and heartbeat still make sense.
+            if (DevFlags.Invulnerable) amount = 0;
             Health = Mathf.Max(0, Health - amount);
             if (attackerPos != Vector3.zero)
                 OnDamagedFrom?.Invoke(attackerPos);
@@ -78,14 +88,15 @@ namespace VRZ.Player
                 IsDead = true;
         }
 
-        private void OnHealthChanged()
+        private void OnHealthChangedRender()
         {
             OnHealthChangedEvent?.Invoke(Health, maxHealth);
+            OnHealthChanged?.Invoke(Health, maxHealth);
         }
 
         private void OnDeathChanged()
         {
-            if (IsDead) OnDiedEvent?.Invoke();
+            if (IsDead) { OnDiedEvent?.Invoke(); OnDied?.Invoke(); }
         }
     }
 }

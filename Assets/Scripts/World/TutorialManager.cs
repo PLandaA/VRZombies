@@ -46,6 +46,41 @@ namespace VRZ.World
         private Transform _head;
         private int _step = -1;
 
+        [Header("Debug")]
+        [Tooltip("Editor / development builds only: A on the right controller or the A key completes the tutorial instantly.")]
+        [SerializeField] private bool allowSkipWithA = true;
+        private bool _aWasDown;
+
+        private void Update()
+        {
+            // Support-hand step: complete it if the front grip is already held (see IsFrontGripHeld).
+            if (_step == 3 && IsFrontGripHeld()) { Show(4); return; }
+
+            if (!allowSkipWithA || !Debug.isDebugBuild) return;
+            if (_step < 0 || _step >= 6) return;                         // already done (or not started)
+
+            // Keyboard A (Input System package; the project runs Input System only, no legacy Input)
+            var kb = UnityEngine.InputSystem.Keyboard.current;
+            if (kb != null && kb.aKey.wasPressedThisFrame) { SkipTutorial(); return; }
+
+            // Controller A (right Touch primary button), rising edge only
+            var right = UnityEngine.XR.InputDevices.GetDeviceAtXRNode(UnityEngine.XR.XRNode.RightHand);
+            if (!right.isValid) return;
+            right.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primaryButton, out bool aDown);
+            bool pressed = aDown && !_aWasDown;
+            _aWasDown = aDown;
+            if (pressed) SkipTutorial();
+        }
+
+        /// DEBUG: jump straight to the DONE sign and flag TutorialDone, exactly as throwing the grenade would.
+        public void SkipTutorial()
+        {
+            if (_step >= 6) return;
+            Debug.Log("[Tutorial] DEBUG skip (A button).");
+            Show(6);
+            StartCoroutine(MarkTutorialDone());
+        }
+
         private void Start()
         {
             if (triggerGrabbables != null)
@@ -92,19 +127,31 @@ namespace VRZ.World
             return false;
         }
 
-        // Step 0: hold the rifle by the TRIGGER GRIP (Handle grabbable). Step 1: support hand on
-        // the front grip (Core grabbable). No IsMine filter here: Grabbable.OnGrabEvent only ever
-        // fires for LOCAL hands, and it fires BEFORE the hand registers as holding -- an IsHeld()
-        // check at this instant would reject the player's own grab.
+        // Step 0: hold the rifle by the TRIGGER GRIP (Handle grabbable) -> 1: LOAD the mag ->
+        // 2: RACK the slide -> 3: support hand on the front grip (Core grabbable) -> 4 fire -> 5 grenade.
+        // No IsMine filter on grab events: Grabbable.OnGrabEvent only ever fires for LOCAL hands,
+        // and it fires BEFORE the hand registers as holding -- an IsHeld() check at this instant
+        // would reject the player's own grab.
         private void OnTriggerGripGrab(Hand hand, Grabbable g) { if (_step == 0) Show(1); }
-        private void OnRifleGrab(Hand hand, Grabbable g) { if (_step == 1) Show(2); }
-        private void OnMagPlaced(AutoGun g, AutoAmmo a) { if (!IsMine(g)) return; if (_step <= 2) Show(3); }
+        private void OnMagPlaced(AutoGun g, AutoAmmo a) { if (!IsMine(g)) return; if (_step <= 1) Show(2); }
         private void OnSlideLoaded(AutoGun g, SlideLoadType t)
         {
             if (!IsMine(g)) return;
-            if (t == SlideLoadType.HandLoaded && _step <= 3) Show(4);
+            if (t == SlideLoadType.HandLoaded && _step <= 2) Show(3);
         }
+        private void OnRifleGrab(Hand hand, Grabbable g) { if (_step == 3) Show(4); }
         private void OnShot(AutoGun g) { if (!IsMine(g)) return; if (_step <= 4) Show(5); }
+
+        /// The support-hand step can already be satisfied when it appears (players often keep the
+        /// second hand on the front grip while loading). OnGrabEvent won't re-fire, so poll it.
+        private bool IsFrontGripHeld()
+        {
+            if (rifleGrabbable != null && rifleGrabbable.IsHeld()) return true;
+            if (extraRifles != null)
+                foreach (var r in extraRifles)
+                    if (r != null && r.IsHeld()) return true;
+            return false;
+        }
 
         private void OnGrenadeThrown()
         {
@@ -114,12 +161,27 @@ namespace VRZ.World
         }
 
         /// Flags the LOCAL player's networked TutorialDone so the lobby can gate the match start.
+        ///
+        /// Netcode debt #4. Waiting is normal here: since the session menu (B2) the tutorial can be
+        /// finished before any room exists, so we must keep the flag pending until the player
+        /// connects. What is NOT normal is a running session whose local NetworkPlayer never
+        /// shows up (spawn failed): that used to stall the lobby forever with no clue. We keep
+        /// waiting (giving up would silently break the gate) but say why, loudly and periodically.
         private IEnumerator MarkTutorialDone()
         {
+            const float pollSeconds = 0.5f;
+            const float firstWarnAfter = 10f;   // seconds of "running but no player" before the first warning
+            const float warnEvery = 30f;
+
+            float runningWithoutPlayer = 0f;
+            float nextWarnAt = firstWarnAfter;
+
             while (true)
             {
                 var nm = NetworkSession.Current;
-                if (nm != null && nm.IsRunning)
+                bool running = nm != null && nm.IsRunning;
+
+                if (running)
                 {
                     var np = nm.GetPlayer();
                     if (np != null && np.IsValid)
@@ -128,8 +190,25 @@ namespace VRZ.World
                         Debug.Log("[Tutorial] Completed - TutorialDone synced.");
                         yield break;
                     }
+
+                    runningWithoutPlayer += pollSeconds;
+                    if (runningWithoutPlayer >= nextWarnAt)
+                    {
+                        Debug.LogWarning("[Tutorial] Session is running but the local NetworkPlayer is missing after "
+                                         + runningWithoutPlayer.ToString("F0") + " s. TutorialDone cannot be set; the lobby will "
+                                         + "stay on 'COMPLETE THE TUTORIAL'. Check NetworkManager.SpawnPlayer / playerPrefab.");
+                        nextWarnAt += warnEvery;
+                    }
                 }
-                yield return new WaitForSeconds(0.5f);
+                else
+                {
+                    // Not connected yet (menu open, or reconnecting): counting restarts when a
+                    // session appears, so a long menu wait never produces a false alarm.
+                    runningWithoutPlayer = 0f;
+                    nextWarnAt = firstWarnAfter;
+                }
+
+                yield return new WaitForSeconds(pollSeconds);
             }
         }
 
@@ -153,8 +232,8 @@ namespace VRZ.World
                 foreach (var gr in grenades)
                     if (gr != null && !gr.gameObject.activeSelf) gr.gameObject.SetActive(true);
 
-            // The LOAD step reveals the mags -- can't skip ahead loading from another angle
-            if (step >= 2)
+            // The LOAD step (now step 1) reveals the mags -- can't skip ahead loading from another angle
+            if (step >= 1)
                 SetAmmoVisible(true);
         }
 

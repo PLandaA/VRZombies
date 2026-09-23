@@ -27,13 +27,17 @@ namespace VRZ.Network
 
         private float _countdown = -1f;
         private bool _loading;
+        private bool _fadeStarted;
+        private const float FadeOutSeconds = 1f;
 
         private void Update()
         {
             var nm = NetworkManager.instance;
             if (nm == null || nm.runner == null || !nm.runner.IsRunning)
             {
-            SetText("Connecting...");
+                // Before a room exists the SessionMenu owns the status text (menu, "Connecting...",
+                // errors). Only show our own message when nobody else can.
+                SetText(nm != null && nm.State != NetworkManager.SessionState.Offline ? "" : "Connecting...");
                 return;
             }
 
@@ -42,10 +46,12 @@ namespace VRZ.Network
             int playerCount = 0;
             foreach (var p in runner.ActivePlayers) playerCount++;
 
-            if (playerCount < requiredPlayers)
+            // Production gate from the scene, or 1 under VRZ_SOLO_TEST (Core/DevFlags.cs).
+            int required = DevFlags.MinPlayers(requiredPlayers);
+            if (playerCount < required)
             {
-                _countdown = -1f;
-            SetText("WAITING FOR PLAYER...\n(" + playerCount + "/" + requiredPlayers + ")");
+                CancelCountdown();
+                SetText("WAITING FOR PLAYER...\n(" + playerCount + "/" + required + ")");
                 return;
             }
 
@@ -59,7 +65,7 @@ namespace VRZ.Network
             }
             if (tutorialDone < playerCount)
             {
-                _countdown = -1f;
+                CancelCountdown();
                 SetText("COMPLETE THE TUTORIAL!\n(" + tutorialDone + "/" + playerCount + " ready)");
                 return;
             }
@@ -68,6 +74,14 @@ namespace VRZ.Network
                 _countdown = startCountdown;
 
             _countdown -= Time.deltaTime;
+
+            // Fade every client to black over the last second so the arena's synchronous scene
+            // integration (unload lobby + GC, ~0.5 s in editor) happens behind a black screen.
+            if (_countdown <= FadeOutSeconds && !_fadeStarted)
+            {
+                _fadeStarted = true;
+                VRZ.World.ScreenFader.FadeOut(FadeOutSeconds);
+            }
 
             if (_countdown > 0f)
             {
@@ -81,6 +95,17 @@ namespace VRZ.Network
                     _loading = true;
                     runner.LoadScene(SceneRef.FromIndex(gameSceneIndex));
                 }
+            }
+        }
+
+        /// A player left or un-readied mid-countdown: reset the timer and lift the fade if it started.
+        private void CancelCountdown()
+        {
+            _countdown = -1f;
+            if (_fadeStarted)
+            {
+                _fadeStarted = false;
+                VRZ.World.ScreenFader.FadeIn(0.3f);
             }
         }
 

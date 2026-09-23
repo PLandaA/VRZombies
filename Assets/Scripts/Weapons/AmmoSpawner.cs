@@ -27,7 +27,7 @@ namespace VRZ.Weapons
 
         public override void Spawned()
         {
-            _waveSystem = FindFirstObjectByType<ZombieSpawner>();
+            _waveSystem = ZombieSpawner.Current;   // self-registered (fix A8)
             if (_waveSystem != null)
                 _waveSystem.OnIntermissionStarted.AddListener(OnIntermission);
             else
@@ -86,13 +86,12 @@ namespace VRZ.Weapons
             for (int i = 0; i < toSpawn; i++)
             {
                 var p = spawnPoints[i % spawnPoints.Length];
-                var spawned = Runner.Spawn(ammoPrefab, p.position, p.rotation);
+                Runner.Spawn(ammoPrefab, p.position, p.rotation);
 
-                // Match the spawn marker's scale: the level's starting magazines are scaled up
-                // (2x) in the scene, so prefab-scale refills looked like different, misplaced
-                // objects. The marker now defines pose AND size in one place.
-                if (spawned != null)
-                    spawned.transform.localScale = p.lossyScale;
+                // Netcode fix A2. The size comes from the PREFAB (its root is already scaled 2.02,
+                // same as the scene magazines and the markers), never from the marker: this only
+                // runs on the State Authority and the mag's NetworkTransform has SyncScale off, so
+                // a marker-driven scale would show one size on the master and another on proxies.
             }
         }
     }

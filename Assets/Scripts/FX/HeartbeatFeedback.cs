@@ -25,7 +25,6 @@ namespace VRZ.FX
         private AudioSource _source;
         private AudioClip _lubDub;
         private float _nextBeat;
-        private float _nextPoll;
         private float _severity = -1f;   // -1 = silent; 0..1 = how close to death
 
         private void Awake()
@@ -37,19 +36,39 @@ namespace VRZ.FX
             _lubDub = SynthesizeLubDub();
         }
 
+        private IPlayerState _player;
+
+        private void OnDisable()
+        {
+            if (_player != null) { _player.OnHealthChanged -= OnHealthChanged; _player = null; }
+        }
+
+        /// Debt D4: severity is recomputed only when the replicated Health changes (Fusion
+        /// OnChangedRender), not polled 4x/s. Beat timing still runs every frame for precision.
+        private void OnHealthChanged(int health, int max)
+        {
+            _severity = -1f;
+            if (_player != null && _player.IsAlive && health > 0 && max > 0)
+            {
+                float frac = health / (float)max;
+                if (frac <= startThreshold)
+                    _severity = 1f - Mathf.Clamp01(frac / startThreshold);   // 0 at threshold, 1 near death
+            }
+        }
+
         private void Update()
         {
-            // Poll health cheaply (4x/s); beat timing runs every frame for precision.
-            if (Time.time >= _nextPoll)
+            // Bind once to the local player (it can be replaced after a game over: re-bind then).
+            var current = NetworkSession.Current?.GetPlayer();
+            if (current != _player)
             {
-                _nextPoll = Time.time + 0.25f;
+                if (_player != null) _player.OnHealthChanged -= OnHealthChanged;
+                _player = current;
                 _severity = -1f;
-                var player = NetworkSession.Current?.GetPlayer();
-                if (player != null && player.IsAlive && player.Health > 0)
+                if (_player != null)
                 {
-                    float frac = player.Health / (float)player.MaxHealth;
-                    if (frac <= startThreshold)
-                        _severity = 1f - Mathf.Clamp01(frac / startThreshold);   // 0 at threshold, 1 near death
+                    _player.OnHealthChanged += OnHealthChanged;
+                    OnHealthChanged(_player.Health, _player.MaxHealth);   // initial state
                 }
             }
 

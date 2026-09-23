@@ -37,13 +37,18 @@ namespace VRZ.Weapons
 
         private void OnLocalHit(AutoGun gun, RaycastHit hit)
         {
-            if (Object == null || !Object.HasStateAuthority) return;
-
+            // AutoGun raises OnHitEvent only on the client that pulled the trigger, so this IS the
+            // shooter. Netcode debt #3: the old "if (!HasStateAuthority) return" also dropped the
+            // shooter's own particle for ~one RTT after grabbing a rifle someone else owned.
             SpawnEffect(hit.point, hit.normal);
-            RPC_HitEffect(hit.point, hit.normal);
+            if (Object != null && Object.IsValid)
+                RPC_HitEffect(hit.point, hit.normal);
         }
 
-        [Rpc(RpcSources.StateAuthority, RpcTargets.All, InvokeLocal = false)]
+        // RpcSources.All (was StateAuthority): the shooter may still be a proxy of the rifle while
+        // its authority request is in flight, and Fusion would refuse to send. Same pattern as the
+        // damage RPCs; the damage itself is already authoritative on the victim, this is FX only.
+        [Rpc(RpcSources.All, RpcTargets.All, InvokeLocal = false)]
         private void RPC_HitEffect(Vector3 point, Vector3 normal)
         {
             SpawnEffect(point, normal);

@@ -80,3 +80,6 @@ Assets/Scripts/Editor.meta
 _Recovery/
 Assets/_Recovery/
 Assets/_Recovery.meta
+
+# Local safety copies made during refactors (not part of the project)
+/Backups/

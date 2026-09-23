@@ -45,6 +45,14 @@ namespace VRZ.Weapons
         {
             _grabbable.OnBeforeGrabEvent -= OnBeforeGrabbed;
             _grabbable.OnGrabEvent -= OnGrabbed;
+
+            // Leave the PlacePoint NOW, while the object is still alive. Despawned runs before
+            // Unity's OnDestroy; if we wait, AutoHand's Grabbable.OnDestroy -> PlacePoint.Remove
+            // tries to re-parent a GameObject that is already being destroyed and logs
+            // "Cannot set the parent ... while it is being destroyed" on every runner shutdown.
+            if (_grabbable.placePoint != null)
+                _grabbable.placePoint.Remove(_grabbable);
+
             base.Despawned(runner, hasState);
         }
 

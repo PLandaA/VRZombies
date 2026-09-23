@@ -227,221 +227,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &4512891630610676761
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4512891630610676760}
-  - component: {fileID: 4512891630610676771}
-  - component: {fileID: 4512891630610676764}
-  - component: {fileID: 4512891630610676765}
-  - component: {fileID: 4512891630610676766}
-  - component: {fileID: 4512891630610676767}
-  m_Layer: 0
-  m_Name: AR_Ammo (3)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!4 &4512891630610676760
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4512891630610676761}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0.0000000069545294, y: -3.7932925e-17, z: -4.656613e-10, w: 1}
-  m_LocalPosition: {x: -0.04440825, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4512891631541320279}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &4512891630610676771
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4512891630610676761}
-  m_Mesh: {fileID: -7936072505712344669, guid: 62a2133bd055b9842b34e64b2d7431a7, type: 3}
---- !u!23 &4512891630610676764
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4512891630610676761}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 807cfde5550b2844d8e16c7aad14a664, type: 2}
-  - {fileID: 2100000, guid: 807cfde5550b2844d8e16c7aad14a664, type: 2}
-  - {fileID: 2100000, guid: 807cfde5550b2844d8e16c7aad14a664, type: 2}
-  - {fileID: 2100000, guid: 807cfde5550b2844d8e16c7aad14a664, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &4512891630610676765
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4512891630610676761}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 822bc9090447b9c40833509c4a32e597, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ignoreMe: 0
-  body: {fileID: 4512891631541320277}
-  hightlightMaterial: {fileID: 0}
-  isGrabbable: 1
-  CopySettings: {fileID: 0}
-  grabType: 0
-  grabPoseType: 0
-  handType: 0
-  singleHandOnly: 1
-  instantGrab: 0
-  useGentleGrab: 0
-  maintainGrabOffset: 0
-  parentOnGrab: 1
-  heldNoFriction: 1
-  ignoreWeight: 0
-  allowHeldSwapping: 1
-  throwPower: 1
-  jointBreakForce: 3500
-  showAdvancedSettings: 0
-  makeChildrenGrabbable: 1
-  grabPriorityWeight: 1
-  ignoreReleaseTime: 0.5
-  minHeldDrag: 1.5
-  minHeldAngleDrag: 3
-  minHeldMass: 0.1
-  maxHeldVelocity: 10
-  heldPositionOffset: {x: 0, y: 0, z: 0}
-  heldRotationOffset: {x: 0, y: 0, z: 0}
-  customGrabJoint: {fileID: 0}
-  jointedBodies: []
-  heldIgnoreColliders: []
-  pullApartBreakOnly: 1
-  showEvents: 1
-  onGrab:
-    m_PersistentCalls:
-      m_Calls: []
-  onRelease:
-    m_PersistentCalls:
-      m_Calls: []
-  onSqueeze:
-    m_PersistentCalls:
-      m_Calls: []
-  onUnsqueeze:
-    m_PersistentCalls:
-      m_Calls: []
-  onHighlight:
-    m_PersistentCalls:
-      m_Calls: []
-  onUnhighlight:
-    m_PersistentCalls:
-      m_Calls: []
-  OnJointBreak:
-    m_PersistentCalls:
-      m_Calls: []
-  lockHandOnGrab: 0
---- !u!65 &4512891630610676766
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4512891630610676761}
-  m_Material: {fileID: 13400000, guid: c810f1a726076ec438effe5af772151a, type: 2}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.046297476, y: 0.08907876, z: 0.014}
-  m_Center: {x: 0, y: -0.04, z: 0}
---- !u!114 &4512891630610676767
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4512891630610676761}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e4313c8dbf9d16545a3263ec0411b031, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  connectedGrabbable: {fileID: 4512891631541320278}
-  pivotOffset: {x: 0, y: 0, z: 0}
-  heldMassScale: 0.1
-  xMaxLimit: 0
-  xMinLimit: 0
-  xSpring: 0
-  yMaxLimit: 0
-  yMinLimit: -0.03
-  ySpring: 1
-  zMaxLimit: 0
-  zMinLimit: 0
-  zSpring: 0
-  eventOffset: 0.05
-  OnMinDistanceEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  OnMaxDistanceEvent:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!1 &4512891630626842264
 GameObject:
   m_ObjectHideFlags: 0
@@ -733,18 +518,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: Fusion.Addons.Physics.NetworkRigidbody3D, Fusion.Addons.Physics
-        m_MethodName: set_enabled
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
   OnRemove:
     m_PersistentCalls:
       m_Calls:
@@ -759,18 +532,6 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: Fusion.Addons.Physics.NetworkRigidbody3D, Fusion.Addons.Physics
-        m_MethodName: set_enabled
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 1
         m_CallState: 2
   OnHighlight:
     m_PersistentCalls:
@@ -1049,6 +810,7 @@ GameObject:
   - component: {fileID: 8643270878843812967}
   - component: {fileID: 1482872635173356541}
   - component: {fileID: 4217667902142663533}
+  - component: {fileID: 562106198545046503}
   m_Layer: 0
   m_Name: Core
   m_TagString: Untagged
@@ -1073,7 +835,6 @@ Transform:
   - {fileID: 4512891631293923576}
   - {fileID: 4512891631853668921}
   - {fileID: 4512891631647146362}
-  - {fileID: 4512891630610676760}
   - {fileID: 4512891632268017654}
   - {fileID: 4512891630384066087}
   - {fileID: 4512891632081089060}
@@ -2381,13 +2142,15 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 340324913
+  SortKey: 3337946858
   ObjectInterest: 1
   Flags: 524289
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 3975590784100531669}
   - {fileID: 8749418622068061830}
+  - {fileID: 4105465846754632833}
+  - {fileID: 562106198545046503}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &3975590784100531669
 MonoBehaviour:
@@ -2424,7 +2187,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd3e4fd1fb56d5e45ba902f4008c252e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkAutoGun
-  _NetworkedAmmo: 0
   _LoadedMagId:
     Object:
       Raw: 0
@@ -2514,6 +2276,20 @@ MonoBehaviour:
   peakIntensity: 5
   decayPerSecond: 90
   range: 8
+--- !u!114 &562106198545046503
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4512891631541320272}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 688c762f6434fc4429532dde0cd6c071, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VRZ.Weapons.WeaponHomeReturn
+  returnAfterSeconds: 5
+  homeRadius: 0.5
 --- !u!1 &4512891631570128839
 GameObject:
   m_ObjectHideFlags: 0
@@ -2523,6 +2299,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4512891631570128838}
+  - component: {fileID: 6813212019688788307}
+  - component: {fileID: 7114235287325216601}
   m_Layer: 0
   m_Name: Auto Hand Rifle Fusion
   m_TagString: Untagged
@@ -2546,6 +2324,32 @@ Transform:
   - {fileID: 4512891631541320279}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6813212019688788307
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4512891631570128839}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5ff0d0c1068e094c8fa4ca2fe30488f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VRZ.World.CollisionGroupIgnore
+  group: 0
+  ignores: 01000000
+--- !u!114 &7114235287325216601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4512891631570128839}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3365db352da28aa4da975c40c3b6bf23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VRZ.Weapons.HeldIgnoresTerrain
 --- !u!1 &4512891631579318918
 GameObject:
   m_ObjectHideFlags: 0
