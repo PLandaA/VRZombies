@@ -29,12 +29,10 @@ namespace VRZ.Network
             {
                 if (SpawnPoints.Count > 0)
                 {
-                    // Spawn slot = my rank among the players currently in the room, not my PlayerId.
-                    // Ids are handed out by the cloud and are not consecutive after a leave/rejoin
-                    // (1 and 3 both mapped to slot 1 and two players appeared side by side).
-                    // ActivePlayers is the same set on every client, so sorting it gives every
-                    // client the same slot for the same player.
-                    int slot = SpawnSlotFor(runner, playerRef) % SpawnPoints.Count;
+                    // Spawn slot = my rank among the players in the room (SpawnRules, unit-tested).
+                    var ids = new List<int>();
+                    foreach (var p in runner.ActivePlayers) ids.Add(p.PlayerId);
+                    int slot = SpawnRules.SlotFor(ids, playerRef.PlayerId, SpawnPoints.Count);
                     localCharacter.position = SpawnPoints[slot].spawnPoint.position;
                 }
                 else
@@ -44,15 +42,6 @@ namespace VRZ.Network
                 var spawned = runner.Spawn(networkCharacterPrefab, localCharacter.position, localCharacter.rotation,playerRef);
                 Debug.Log("[Map] Avatar spawned: " + (spawned != null ? spawned.name : "SPAWN FAILED"));
             }
-        }
-
-        private static int SpawnSlotFor(NetworkRunner runner, PlayerRef me)
-        {
-            var ids = new List<int>();
-            foreach (var p in runner.ActivePlayers) ids.Add(p.PlayerId);
-            ids.Sort();
-            int slot = ids.IndexOf(me.PlayerId);
-            return slot >= 0 ? slot : 0;
         }
 
         [ContextMenu("FindSpawnPointsInScene")]

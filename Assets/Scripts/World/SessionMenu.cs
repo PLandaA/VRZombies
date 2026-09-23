@@ -201,8 +201,7 @@ namespace VRZ.World
             foreach (var s in sessions)
             {
                 var row = Instantiate(rowPrefab, listRoot);
-                var code = s.Name.StartsWith(NetworkManager.SessionPrefix)
-                    ? s.Name.Substring(NetworkManager.SessionPrefix.Length) : s.Name;
+                var code = VRZ.Core.RoomCodeRules.DisplayCode(s.Name, NetworkManager.SessionPrefix);
                 var label = row.GetComponentInChildren<TMP_Text>();
                 if (label) label.text = $"ROOM {code}    {s.PlayerCount}/{s.MaxPlayers}";
                 var btn = row.GetComponent<Button>();

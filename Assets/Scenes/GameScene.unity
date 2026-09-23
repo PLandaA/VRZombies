@@ -2205,10 +2205,10 @@ MonoBehaviour:
   - {fileID: 649179711}
   - {fileID: 616112167}
   requiredReadyPlayers: 2
-  baseZombiesPerWave: 1
+  baseZombiesPerWave: 2
   zombiesAddedPerWave: 1
-  maxSimultaneousZombies: 5
-  firstWaveDelay: 10
+  maxSimultaneousZombies: 4
+  firstWaveDelay: 30
   intermissionTime: 15
   spawnInterval: 2
   OnWaveStarted:

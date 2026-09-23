@@ -616,14 +616,17 @@ namespace VRZ.Enemies
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
         public void RPC_TakeDamage(int amount, NetworkBool headshot = default, RpcInfo info = default)
         {
-            if (State == ZombieState.Dead) return;
-            Health = Mathf.Max(0, Health - amount);
+            // Pure, unit-tested rule: a hit on a corpse is not applied (so it can never overwrite the
+            // killer), health clamps at zero, and negative amounts never heal.
+            var outcome = ZombieDamageRules.Apply(Health, State == ZombieState.Dead, amount);
+            if (!outcome.Applied) return;
+            Health = outcome.Health;
             // info.Source is the PlayerRef that sent this RPC (ourselves when InvokeLocal runs it
             // on the master). Recorded before the death write so both land in the same snapshot.
             LastDamager = info.Source;
-            if (Health > 0)
+            if (!outcome.Killed)
                 StaggerTimer = TickTimer.CreateFromSeconds(Runner, 0.18f);
-            if (Health <= 0)
+            else
             {
                 DiedByHeadshot = headshot;
                 State = ZombieState.Dead;

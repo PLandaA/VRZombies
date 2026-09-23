@@ -168,12 +168,9 @@ namespace VRZ.Network
             var taken = new HashSet<string>();
             foreach (var s in _sessions) taken.Add(s.Name);
 
-            string name = null;
-            for (int attempt = 0; attempt < 100 && name == null; attempt++)
-            {
-                var candidate = SessionPrefix + UnityEngine.Random.Range(10, 100);
-                if (!taken.Contains(candidate)) name = candidate;
-            }
+            // RoomCodeRules (unit-tested): random 10..99 not in the list, with an ordered scan as
+            // fallback, so a free code is always found if one exists.
+            string name = RoomCodeRules.Pick(taken, SessionPrefix, UnityEngine.Random.Range);
             if (name == null)
             {
                 LastError = "All room codes are in use. Try again.";
@@ -243,7 +240,7 @@ namespace VRZ.Network
                 }
                 _creating = false;
 
-                CurrentCode = sessionName.StartsWith(SessionPrefix) ? sessionName.Substring(SessionPrefix.Length) : sessionName;
+                CurrentCode = RoomCodeRules.DisplayCode(sessionName, SessionPrefix);
                 SetState(SessionState.Connected);
                 OnConnectionSuccessfull.Invoke();
                 Debug.Log("StartGame successfull: " + sessionName);

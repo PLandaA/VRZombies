@@ -157,7 +157,7 @@ namespace VRZ.Weapons
                 if (!damaged.Add(target)) continue;
 
                 float dist = Vector3.Distance(target.Position, transform.position);
-                int dmg = Mathf.RoundToInt(Mathf.Lerp(zombieDamage, zombieDamage * 0.25f, Mathf.Clamp01(dist / explosionRadius)));
+                int dmg = GrenadeRules.ZombieDamage(dist, explosionRadius, zombieDamage);   // pure rule, unit-tested
                 // Netcode fix A5: no kill prediction; the victim's State Authority names the killer.
                 target.ApplyDamage(new DamageInfo(dmg, target.Position, transform.position));
             }
@@ -191,7 +191,7 @@ namespace VRZ.Weapons
             if (!np.IsValid) return;
             IDamageable target = np;
             if (!target.IsAlive) return;
-            if (Vector3.Distance(body.position, transform.position) > explosionRadius) return;
+            if (!GrenadeRules.HitsPlayer(Vector3.Distance(body.position, transform.position), explosionRadius)) return;
             target.ApplyDamage(new DamageInfo(playerDamage, body.position, transform.position));
         }
 

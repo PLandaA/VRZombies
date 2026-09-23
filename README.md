@@ -111,7 +111,7 @@ Fixes were then prioritised with one rule -- *does it break the two-player exper
 - **Feedback goes through an event queue, gameplay does not.** Fusion itself is state-replication first (RPCs are its only queue-like part), so networked gameplay stays synchronous and authoritative. Presentation is different: a grenade wiping six zombies in one tick used to fire six overlapping popups and six identical death sounds. `FeedbackQueue` buffers kill and sound events and flushes once per frame in `LateUpdate` with coalescing (same-frame kills become one "MULTIKILL x6" banner and a single combo step) and per-clip budgeting (max two plays of the same clip per frame, pitch-varied, through a pool of twelve 3D voices instead of `PlayClipAtPoint`'s throwaway GameObjects).
 - **Gameplay depends on contracts, not on the network layer.** Wave logic, HUDs, weapons and feedback read the session through `INetworkSession` / `IPlayerState` and send presentation through `IFeedbackSink`; the concrete `NetworkManager` and `FeedbackQueue` REGISTER themselves at startup behind two injection points (`NetworkSession.Current`, `Feedback.Sink`) that ship with no default. `NullNetworkSession` and `SilentFeedbackSink` let wave or scoring logic run in a test or an offline scene with no Fusion and no audio at all. A full Service Locator was deliberately *not* introduced: with two services and one implementation each, it would only hide the dependencies that `grep` currently makes obvious.
 - **The dependency direction is compiler-enforced.** All code lives under `VRZ.*` namespaces by folder (`VRZ.Core`, `VRZ.Network`, `VRZ.Player`, `VRZ.Weapons`, `VRZ.Enemies`, `VRZ.FX`, `VRZ.World`), and `VRZ.Core` -- the contracts, the damage model, the pool -- is a separate assembly (`VRZ.Core.asmdef`) that references only Fusion. Core physically *cannot* see gameplay code: any accidental Core -> game dependency is a compile error, not a code-review catch. The rest of the game intentionally stays in `Assembly-CSharp` because Final IK ships without an asmdef (it compiles into the firstpass assembly, which custom assemblies cannot reference).
-- **Pure logic is a separate assembly so it can be tested.** A test assembly cannot reference `Assembly-CSharp`, so the avatar helpers live in their own `VRZ.Avatar.asmdef` with an *empty* reference list (engine only). Getting there forced two small inversions: `FloorSampler` no longer knows what AutoHand or the rig are -- the rig injects an `ignoreCollider` predicate -- and `ElbowPole` exposes a pure `TryCompute` over positions and basis vectors, with `Aim` reduced to a `Transform` adapter. The wave rules (`CountReady`, `AllPlayersDead`, `ZombiesForWave`) were lifted out of the `NetworkBehaviour` into `VRZ.Core.WaveRules` for the same reason. `Assets/Tests/EditMode` holds the NUnit EditMode suite (42 tests, see [Tests](#tests)); `VRZ > Run EditMode Tests` runs it in about a second.
+- **Pure logic is a separate assembly so it can be tested.** A test assembly cannot reference `Assembly-CSharp`, so the avatar helpers live in their own `VRZ.Avatar.asmdef` with an *empty* reference list (engine only). Getting there forced two small inversions: `FloorSampler` no longer knows what AutoHand or the rig are -- the rig injects an `ignoreCollider` predicate -- and `ElbowPole` exposes a pure `TryCompute` over positions and basis vectors, with `Aim` reduced to a `Transform` adapter. The wave rules (`CountReady`, `AllPlayersDead`, `ZombiesForWave`) were lifted out of the `NetworkBehaviour` into `VRZ.Core.WaveRules` for the same reason. `Assets/Tests/EditMode` holds the NUnit EditMode suite (75 tests, see [Tests](#tests)); `VRZ > Run EditMode Tests` runs it in under two seconds.
 - **Self-registration and events instead of scene queries.** Objects that others need to find register themselves in `Spawned`/`Despawned` (`ZombieSpawner.Current`, `NetworkManager.Rigs` for avatars), which removed every `FindObjectsByType` from hot paths (zombie re-targeting, grenade blasts, a per-frame scan during the whole lobby). Game over is an `OnChangedRender` event (`ZombieSpawner.GameOverRaised`), and health readers (vignette, heartbeat, wrist HUD) subscribe to `IPlayerState.OnHealthChanged` instead of polling a replicated value that Fusion already knows the exact frame it changes.
 - **Test switches are compile-time, production values live in the scene.** Solo testing used to mean editing the scene (`requiredPlayers = 1`, `maxHealth = 10000`) and remembering to revert -- nobody did, so the whole damage -> death -> game-over flow shipped untested. Now the scene always holds production values and testing opts in through scripting define symbols (`VRZ_SOLO_TEST`, `VRZ_INVULNERABLE`, see `VRZ.Core.DevFlags`) that compile out of normal builds and log a warning at startup when active.
 
@@ -132,7 +132,7 @@ Fixes were then prioritised with one rule -- *does it break the two-player exper
 
 ## Tests
 
-**42 NUnit EditMode tests, all passing** (last run 2026-09-23: 42/42 in about a second including editor setup; the test bodies themselves take ~20 ms). They cover the pure logic that was deliberately lifted out of `NetworkBehaviour`s into engine-only assemblies (see Design & Architecture Decisions), so they need no scene, no headset and no Fusion session.
+**75 NUnit EditMode tests, all passing** (last run 2026-09-23: 75/75 in under two seconds including editor setup). They cover the pure logic that was deliberately lifted out of `NetworkBehaviour`s into engine-only code (see Design & Architecture Decisions) -- so they need no scene, no headset and no Fusion session -- plus the floor sampler against real colliders.
 
 | Suite | Tests | What it pins down |
 |---|---|---|
@@ -140,14 +140,21 @@ Fixes were then prioritised with one rule -- *does it break the two-player exper
 | `ElbowPoleTests` | 8 | Bend-plane geometry: pole perpendicular to the arm for any arm direction, down/out/back bias, left/right mirroring, scale; degenerate inputs (arm too short, bias parallel to the arm); `Aim` blending and null safety |
 | `PoseSmootherTests` | 7 | Exponential filter: the first sample primes with no lag, each step moves by the exponential factor, framerate independence, rotation slerp, a zero time constant passes through, reset and re-enable re-prime instead of resuming stale state |
 | `WaveRulesTests` | 15 | Wave size = base + linear ramp (five parameterised cases) and an empty wave at 0 or below; the ready count ignores invalid and null players and a null session; "all players dead" requires every *valid* player at zero; a fake player dies through `IDamageable` |
+| `GrenadeRulesTests` | 7 | Zombie damage is full at the centre, 25% at the edge and beyond (the blast is a sphere *overlap*), exactly linear in between and never increasing with distance; a zero radius does not divide by zero; players are hit inside the radius and on its edge, not beyond |
+| `ZombieDamageRulesTests` | 6 | Non-lethal hits, exact and overkill lethal hits (health clamps at zero), a hit on a corpse is not applied, negative damage never heals, and the full "last hit gets the kill, a shot on the corpse cannot steal it" scenario with two shooters |
+| `SpawnRulesTests` | 5 | Two players get distinct slots, including the non-consecutive ids of a leave/rejoin that broke the old `id % slots` rule; the order of the active-player list does not matter; wrap-around; unknown player / no slots / no list fall back to slot 0 |
+| `RoomCodeRulesTests` | 7 | Codes are the prefix + a two-digit number from the 10..99 range, taken codes are skipped, the last free code is found even when the random picks keep missing, all 90 taken returns null, and display codes strip the prefix |
+| `FloorSamplerTests` | 8 | With real colliders: no ground ever, the first sample snaps to the ground top, the highest surface wins, the injected "own collider" filter, AutoHand's `Hand` layer and triggers are not ground, a lost sample keeps the last value, and rising ground eases in over the settle time instead of snapping |
 
 **Test doubles.** `FakePlayerState` implements the full `IPlayerState` contract -- including the `OnHealthChanged` and `OnDied` events added during the netcode hardening pass, so the contract and the double cannot drift -- and the wave rules are also exercised against the real `NullNetworkSession`.
+
+**The tests pin what ships.** Every rule extracted for testing (`GrenadeRules`, `ZombieDamageRules`, `SpawnRules`, `RoomCodeRules`) is the code the game itself calls -- `NetworkGrenade`, `NetworkZombie.RPC_TakeDamage`, `MapDefault`, `NetworkManager` and `SessionMenu` -- not a copy kept next to it. Writing the tests also closed two edge cases: a negative damage value (the damage RPC accepts input from any client) can no longer heal a zombie, and room-code selection falls back to an ordered scan so a free code is always found when one exists, instead of random picks possibly missing the last free one. `FloorSampler`, part of the tuned avatar pipeline, was tested from the outside without changing a line of it.
 
 **Running them.**
 - In the editor: *Window > General > Test Runner > EditMode > Run All*, or the menu **VRZ > Run EditMode Tests** (`Assets/Editor/RunEditModeTests.cs`: a one-shot `TestRunnerApi` run that logs a `[Tests] DONE passed=... failed=...` summary and every failure with its stack trace -- handy for tooling that cannot drive the Test Runner window).
 - Headless (project closed in the editor): `Unity.exe -batchmode -projectPath . -runTests -testPlatform EditMode -assemblyNames VRZ.Tests.EditMode -testResults TestResults.xml`.
 
-**What is deliberately not unit-tested.** Networking (authority transfer, RPCs, replication, reconnection) and the feel of hands and held objects depend on a live Fusion session, AutoHand physics and the headset's frame rate. Those are verified in two-build and headset sessions against a checklist, reading the development-build logs listed under Setup. The next candidates for extraction into pure, testable functions are the grenade damage falloff, kill-credit resolution, spawn-slot ranking and room-code selection.
+**What is deliberately not unit-tested.** Networking (authority transfer, RPCs, replication, reconnection) and the feel of hands and held objects depend on a live Fusion session, AutoHand physics and the headset's frame rate. Those are verified in two-build and headset sessions against a checklist, reading the development-build logs listed under Setup.
 
 ## Project Structure (my code)
 
@@ -158,7 +165,8 @@ Assets/Scripts/
              LobbyManager (ready-up + scene load), MapDefault/GameMap/LobbyMap (avatar spawn per scene)
   Core/      VRZ.Core.asmdef (independent assembly -- contracts cannot depend on gameplay),
              IDamageable + DamageInfo, INetworkSession + IPlayerState (+ injection points,
-             Null/Silent implementations), IFeedbackSink, PrefabPool, Rules/WaveRules (pure wave logic),
+             Null/Silent implementations), IFeedbackSink, PrefabPool, Rules/ (pure, unit-tested rules:
+             WaveRules, GrenadeRules, ZombieDamageRules, SpawnRules, RoomCodeRules),
              DevFlags (compile-time test switches)
   Player/    NetworkRig (avatar orchestration) + NetworkRig.LiveTuner (editor partial),
              Avatar/ VRZ.Avatar.asmdef (engine-only assembly) { FloorSampler, AvatarScaleCalibrator,
@@ -183,8 +191,9 @@ Assets/Scripts/
              game over / partner left / connection lost), AmbiencePlayer, FallCatcher, IgnoreCollisionsWithRoots,
              CollisionGroupIgnore (runtime group ignores for spawned prefabs), TerrainQualityProfile (per-platform
              grass budget), PlatformRenderTweaks, PhysicsStepMonitor (editor-only)
-Assets/Tests/EditMode/ VRZ.Tests.EditMode.asmdef (NUnit, editor-only) -- Avatar/ (calibrator, smoother, elbow),
-                 Rules/ (wave rules), Fakes/FakePlayerState; run via menu VRZ > Run EditMode Tests
+Assets/Tests/EditMode/ VRZ.Tests.EditMode.asmdef (NUnit, editor-only) -- Avatar/ (calibrator, smoother, elbow,
+                 floor sampler), Rules/ (wave, grenade, zombie damage, spawn slot, room code), Fakes/FakePlayerState;
+                 run via menu VRZ > Run EditMode Tests
 Assets/Editor/   RunEditModeTests (TestRunnerApi one-shot for tooling/CI)
 Assets/Prefabs/  Rifle, magazines, grenade, zombies, network character/player, network runner, spawn points,
                  Auto Hand Local Character (the single local rig used by BOTH scenes), UI/SessionRow
