@@ -75,7 +75,7 @@ namespace VRZ.Enemies{
         private TickTimer _waitLogTimer;
 
         /// Netcode fix A8. The spawner registers itself so readers (GameOverController, RoundJuice,
-        /// PlayerBelt, AmmoSpawner, ScoreWristHUD) never need FindFirstObjectByType. Set in Awake,
+        /// PlayerBelt, AmmoSpawner) never need FindFirstObjectByType. Set in Awake,
         /// not Spawned: it is a scene object, and subscribers wire their UnityEvent listeners from
         /// their own Start(), which can run before Fusion attaches scene objects. Null in the lobby.
         public static ZombieSpawner Current { get; private set; }
