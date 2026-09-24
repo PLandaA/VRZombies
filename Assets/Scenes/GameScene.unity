@@ -2189,9 +2189,9 @@ MonoBehaviour:
   - {fileID: 616112167}
   requiredReadyPlayers: 2
   baseZombiesPerWave: 2
-  zombiesAddedPerWave: 1
-  maxSimultaneousZombies: 4
-  firstWaveDelay: 30
+  zombiesAddedPerWave: 2
+  maxSimultaneousZombies: 6
+  firstWaveDelay: 15
   intermissionTime: 15
   spawnInterval: 2
   OnWaveStarted:
@@ -8425,55 +8425,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 477712, guid: ec1ebb41f4c94ab41a06eafbf11736e9, type: 3}
   m_PrefabInstance: {fileID: 1134716023}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1151404556
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1151404558}
-  - component: {fileID: 1151404557}
-  m_Layer: 0
-  m_Name: LobbyMap
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &1151404557
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1151404556}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bb47cd518cc6d69499572423b99afba3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  SpawnPoints:
-  - {fileID: 1677859509}
-  - {fileID: 2115958535}
-  localCharacter: {fileID: 7221751474417632827, guid: 2d9dff267f96e174bbafa567738c4c43, type: 3}
-  networkCharacterPrefab: {fileID: 3573354196599582181, guid: 867053fdf9caecd42a9826f7b973f6bc, type: 3}
---- !u!4 &1151404558
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1151404556}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -10.1019535, y: -9.642426, z: -0.07901488}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1156008030
 GameObject:
   m_ObjectHideFlags: 0
@@ -10166,59 +10117,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300008, guid: ee28604125df26b42b4f32ff15664954, type: 3}
---- !u!1 &1291695382
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1291695384}
-  - component: {fileID: 1291695383}
-  m_Layer: 0
-  m_Name: NetworkManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1291695383
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1291695382}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cad1f6e894ff877439d23cdb3a5071a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  networkRunnerPrefab: {fileID: 6053236589690718884, guid: 8d1c6a9b479872942874cf144ae34f3d, type: 3}
-  playerPrefab: {fileID: -8088165985321862546, guid: bb17cdf0da8ce044ba5432b129322251, type: 3}
-  runner: {fileID: 0}
-  OnConnectionStart:
-    m_PersistentCalls:
-      m_Calls: []
-  OnConnectionSuccessfull:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!4 &1291695384
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1291695382}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1297149358
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16796,37 +16694,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 418336, guid: 7e6af4e8360e4b342840a974109fcaed, type: 3}
   m_PrefabInstance: {fileID: 1901439202}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1916071768
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1916071769}
-  m_Layer: 0
-  m_Name: TreeRing
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 87
-  m_IsActive: 1
---- !u!4 &1916071769
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1916071768}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1922551107
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19655,10 +19522,8 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 410087041}
-  - {fileID: 1291695384}
   - {fileID: 1845112498}
   - {fileID: 80705916}
-  - {fileID: 1151404558}
   - {fileID: 1559633147}
   - {fileID: 1205063697}
   - {fileID: 1922990571}
@@ -19668,7 +19533,6 @@ SceneRoots:
   - {fileID: 616112167}
   - {fileID: 1308874496}
   - {fileID: 2054366840}
-  - {fileID: 1916071769}
   - {fileID: 47237032}
   - {fileID: 1600723244}
   - {fileID: 2001861131}

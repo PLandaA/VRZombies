@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 
 namespace VRZ.World
 {
-    /// Drives a HandCanvasPointer from the controller trigger (netcode fix B2, session menu).
+    /// Drives a HandCanvasPointer from the controller trigger (session menu).
     ///
     /// AutoHand's HandCanvasPointer only exposes Press()/Release(); it does not read input by
     /// itself. This reads a 0..1 trigger axis every frame and turns it into press/release edges

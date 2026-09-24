@@ -2,11 +2,6 @@ using UnityEngine;
 using Fusion;
 using Autohand;
 using VRZ.Core;
-using VRZ.Network;
-using VRZ.Player;
-using VRZ.Enemies;
-using VRZ.FX;
-using VRZ.World;
 
 namespace VRZ.Weapons
 {
@@ -38,7 +33,7 @@ namespace VRZ.Weapons
         private void OnLocalHit(AutoGun gun, RaycastHit hit)
         {
             // AutoGun raises OnHitEvent only on the client that pulled the trigger, so this IS the
-            // shooter. Netcode debt #3: the old "if (!HasStateAuthority) return" also dropped the
+            // shooter. The old "if (!HasStateAuthority) return" also dropped the
             // shooter's own particle for ~one RTT after grabbing a rifle someone else owned.
             SpawnEffect(hit.point, hit.normal);
             if (Object != null && Object.IsValid)

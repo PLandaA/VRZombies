@@ -1,10 +1,4 @@
 using UnityEngine;
-using VRZ.Core;
-using VRZ.Network;
-using VRZ.Player;
-using VRZ.Weapons;
-using VRZ.FX;
-using VRZ.World;
 
 namespace VRZ.Enemies
 {

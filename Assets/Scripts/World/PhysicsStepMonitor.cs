@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+#if UNITY_EDITOR && VRZ_NET_DIAGNOSTICS
 using UnityEngine;
 
 namespace VRZ.World
@@ -10,7 +10,8 @@ namespace VRZ.World
     /// When frame times fluctuate (editor + Link), frames get 0 or 2 steps and held objects visibly
     /// hitch against the camera while walking. This logs the evidence: a histogram of steps per
     /// frame, the current fixedDeltaTime, average fps and body speed, every ReportInterval seconds.
-    /// Self-creates on play; strip-safe (whole file is #if UNITY_EDITOR).
+    /// Self-creates on play, editor-only, and only with VRZ_NET_DIAGNOSTICS: it also turns on
+    /// in-memory profiler recording (for the hitch autopsy), which costs editor performance.
     public class PhysicsStepMonitor : MonoBehaviour
     {
         private const float ReportInterval = 3f;
@@ -23,37 +24,6 @@ namespace VRZ.World
         private float _speedSum;
         private float _nextReport;
 
-        // ── Editor-only mitigation ──
-        // AutoHand clamps fixedDeltaTime to [1/144, 1/50]. The arena runs at ~30 fps in the editor
-        // with a headset, so the clamp pins physics at 20 ms while frames take 30 ms = 1.5 steps
-        // per frame, alternating 1 and 2 -> held objects hitch while walking. Relaxing the floor to
-        // 1/30 kept the 1:1 pairing down to 30 fps...
-        //
-        // ...but (2026-09-21) that traded a walking hitch for a WORSE artifact: AutoHand's joint and
-        // WeightlessFollower are tuned for ~11 ms steps; at 28-33 ms they are under-damped and a held
-        // rifle/magazine oscillates violently in the hand ("the master's rifle shakes": the master
-        // was the 36 fps editor instance). Builds never see this (the monitor is editor-only and the
-        // Quest runs 72 Hz / 13.9 ms). The floor is back at AutoHand's 1/50 so editor feel matches the
-        // build; the walking hitch at 36 fps is the honest symptom of the editor being slow.
-        // Set to 1f/30f to get the old behaviour back for walking tests.
-        private const float RelaxedSlowestTimestep = 1f / 50f;
-        private bool _clampRelaxed;
-        private float _nextClampCheck;
-
-        private void TryRelaxTimestepClamp()
-        {
-            if (_clampRelaxed || Time.unscaledTime < _nextClampCheck) return;
-            _nextClampCheck = Time.unscaledTime + 0.5f;
-
-            var setter = FindFirstObjectByType<DynamicTimestepSetter>();
-            if (setter == null) return;
-
-            float before = setter.slowestTimestep;
-            setter.slowestTimestep = RelaxedSlowestTimestep;
-            _clampRelaxed = true;
-            Debug.Log($"[PhysStep] DynamicTimestepSetter.slowestTimestep {before * 1000f:F1}ms -> {RelaxedSlowestTimestep * 1000f:F1}ms (editor-only mitigation)");
-        }
-
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void AutoCreate()
         {
@@ -63,20 +33,6 @@ namespace VRZ.World
             // The hitch autopsy needs the editor profiler recording (in memory, no window required).
             UnityEditorInternal.ProfilerDriver.enabled = true;
             UnityEditorInternal.ProfilerDriver.profileEditor = false;
-            // ForceQualityLevel("Quest") was tried here: the arena stayed at 30-36 fps with the Quest
-            // RP asset too, so the PC render path is not the bottleneck. Left available for re-tests.
-        }
-
-        // EXPERIMENT: render the editor session with the Quest quality level (Quest_RPAsset) to see
-        // whether the arena's ~30 fps is the PC render path or CPU-side work. Editor-only, in-memory
-        // (QualitySettings changes in play mode do not persist).
-        private static void ForceQualityLevel(string name)
-        {
-            int index = System.Array.IndexOf(QualitySettings.names, name);
-            if (index < 0) { Debug.LogWarning($"[PhysStep] Quality level '{name}' not found"); return; }
-            string before = QualitySettings.names[QualitySettings.GetQualityLevel()];
-            QualitySettings.SetQualityLevel(index, applyExpensiveChanges: true);
-            Debug.Log($"[PhysStep] Quality level {before} -> {QualitySettings.names[QualitySettings.GetQualityLevel()]} (editor-only experiment)");
         }
 
         private void Start() => _nextReport = Time.unscaledTime + ReportInterval;
@@ -193,7 +149,6 @@ namespace VRZ.World
 
         private void Update()
         {
-            TryRelaxTimestepClamp();
             EnsureRecorders();
             TrackSpike(Time.unscaledDeltaTime * 1000f);
 

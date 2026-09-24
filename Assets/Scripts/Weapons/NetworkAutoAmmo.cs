@@ -1,12 +1,6 @@
 using UnityEngine;
 using Fusion;
 using Autohand;
-using VRZ.Core;
-using VRZ.Network;
-using VRZ.Player;
-using VRZ.Enemies;
-using VRZ.FX;
-using VRZ.World;
 
 namespace VRZ.Weapons
 {

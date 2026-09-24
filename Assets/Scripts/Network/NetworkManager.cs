@@ -3,16 +3,11 @@ using Fusion.Sockets;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.Mathematics;
 using UnityEngine;
 using VRZ.Core;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using VRZ.Player;
-using VRZ.Weapons;
-using VRZ.Enemies;
-using VRZ.FX;
-using VRZ.World;
 
 namespace VRZ.Network
 {
@@ -121,14 +116,14 @@ namespace VRZ.Network
         {
             if (!runner) runner = Instantiate(networkRunnerPrefab, transform).GetComponent<NetworkRunner>();
             runner.AddCallbacks(this);
-            // Object pool (debt D1): lives on the manager so it is DontDestroyOnLoad like the runner.
+            // Object pool: lives on the manager so it is DontDestroyOnLoad like the runner.
             if (ObjectPool == null) ObjectPool = gameObject.AddComponent<PooledObjectProvider>();
         }
 
         /// The runner's INetworkObjectProvider. Spawners opt their prefabs in (ZombieSpawner does).
         public PooledObjectProvider ObjectPool { get; private set; }
 
-        // ── Avatar registry (debt D3) ────────────────────────────────────────────────────────
+        // ── Avatar registry ────────────────────────────────────────────────────────
         // Zombies re-target every 2 s and grenades scan on explosion; both used to
         // FindObjectsByType<NetworkRig>, an O(scene) walk. Rigs register themselves in Spawned /
         // Despawned instead, so readers get an O(1) list. Local rig included (it is a proxy of
@@ -243,7 +238,7 @@ namespace VRZ.Network
                 CurrentCode = RoomCodeRules.DisplayCode(sessionName, SessionPrefix);
                 SetState(SessionState.Connected);
                 OnConnectionSuccessfull.Invoke();
-                Debug.Log("StartGame successfull: " + sessionName);
+                Debug.Log("[NetworkManager] Joined room " + sessionName);
             }
             else
             {
@@ -295,7 +290,7 @@ namespace VRZ.Network
         {
             if (player == runner.LocalPlayer)
             {
-                // Netcode debt #5: the marker lookup that used to live here (tag "Respawn" /
+                // The marker lookup that used to live here (tag "Respawn" /
                 // "PlayerSpawnPoint" names) matched nothing in any scene; MapDefault.SpawnCharacter
                 // positions the rig from its SpawnPoints list. Only the grounding pass remains.
                 SnapRigToGround(null);
@@ -362,11 +357,11 @@ namespace VRZ.Network
 
         public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
         {
-            Debug.Log("NewPlayer Joined" + player);
+            Debug.Log("[NetworkManager] Player joined: " + player);
             SpawnPlayer(runner, player);
         }
 
-        // Netcode fix B4 (minimum): the master client owns the wave spawner, the ammo dispenser
+        // The master client owns the wave spawner, the ammo dispenser
         // and every zombie. When it leaves, Fusion orphans or destroys those objects and the
         // survivor is stuck in a frozen, unfinishable arena. We cannot restore the match (the
         // spawner's wave state is not replicated), so we end it cleanly instead.
@@ -387,7 +382,7 @@ namespace VRZ.Network
             // callback, and in two-build tests it did not fire in time while this one always did.
             yield return new WaitForSeconds(0.25f);
 
-            var spawner = VRZ.Enemies.ZombieSpawner.Current;   // self-registered (fix A8)
+            var spawner = VRZ.Enemies.ZombieSpawner.Current;   // self-registered, see ZombieSpawner.Current
             bool spawnerMissing = spawner == null || spawner.Object == null || !spawner.Object.IsValid;
             bool spawnerOrphaned = !spawnerMissing && spawner.Object.StateAuthority == PlayerRef.None;
 
@@ -447,7 +442,7 @@ namespace VRZ.Network
             {
                 if (string.IsNullOrEmpty(LastError)) LastError = "Disconnected: " + shutdownReason;
 
-                // Netcode fix A7: in the arena, give the player a few seconds of "CONNECTION LOST"
+                // In the arena, give the player a few seconds of "CONNECTION LOST"
                 // instead of a silent cut to the lobby. The controller finds no live runner, skips
                 // Shutdown() and loads scene 0 after the hold. In the lobby, reload straight away.
                 bool inArena = SceneManager.GetActiveScene().buildIndex != 0;
@@ -474,7 +469,7 @@ namespace VRZ.Network
 
         }
 
-        // Netcode fix A7. Fusion shuts the runner down right after these; OnShutdown then reloads
+        // Fusion shuts the runner down right after these; OnShutdown then reloads
         // the lobby with LastError on the menu. All we must do here is leave a human-readable
         // reason behind, before OnShutdown's generic "Disconnected: <reason>" fallback.
         public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason)

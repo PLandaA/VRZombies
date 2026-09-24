@@ -1,13 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Fusion;
-using VRZ.Core;
-using VRZ.Network;
-using VRZ.Weapons;
-using VRZ.Enemies;
-using VRZ.FX;
-using VRZ.World;
 
 namespace VRZ.Player
 {

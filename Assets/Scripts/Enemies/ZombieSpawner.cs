@@ -3,11 +3,6 @@ using UnityEngine;
 using VRZ.Core;
 using Fusion;
 using UnityEngine.Events;
-using VRZ.Network;
-using VRZ.Player;
-using VRZ.Weapons;
-using VRZ.FX;
-using VRZ.World;
 
 namespace VRZ.Enemies{
     /// Wave system: spawns zombie rounds, tracks alive count, handles intermissions and player-ready gating.
@@ -29,13 +24,13 @@ namespace VRZ.Enemies{
         private int baseZombiesPerWave = 2;
 
         [Tooltip("Extra zombies added each wave")] [SerializeField]
-        private int zombiesAddedPerWave = 1;
+        private int zombiesAddedPerWave = 2;
 
         [Tooltip("Maximum zombies alive at once")] [SerializeField]
-        private int maxSimultaneousZombies = 4;
+        private int maxSimultaneousZombies = 6;
 
         [Tooltip("Seconds between all players ready and the first wave")] [SerializeField]
-        private float firstWaveDelay = 30f;
+        private float firstWaveDelay = 15f;
 
         [Tooltip("Intermission seconds between waves (reload / reposition)")] [SerializeField]
         private float intermissionTime = 15f;
@@ -72,9 +67,11 @@ namespace VRZ.Enemies{
         [Networked] private int ZombiesLeftToSpawn{ get; set; }
 
         private List<NetworkZombie> _spawnedThisWave = new();
+#if VRZ_NET_DIAGNOSTICS
         private TickTimer _waitLogTimer;
+#endif
 
-        /// Netcode fix A8. The spawner registers itself so readers (GameOverController, RoundJuice,
+        /// The spawner registers itself so readers (GameOverController, RoundJuice,
         /// PlayerBelt, AmmoSpawner) never need FindFirstObjectByType. Set in Awake,
         /// not Spawned: it is a scene object, and subscribers wire their UnityEvent listeners from
         /// their own Start(), which can run before Fusion attaches scene objects. Null in the lobby.
@@ -92,7 +89,7 @@ namespace VRZ.Enemies{
         public override void Spawned(){
             Current = this;
 
-            // Object pool (debt D1). Runs on EVERY client (the partner recycles the proxies Fusion
+            // Object pool. Runs on EVERY client (the partner recycles the proxies Fusion
             // creates for it). Prewarm = worst case alive + corpses waiting to despawn, so during
             // the match no zombie ever pays an Instantiate (measured 1.4-1.8 ms on PC, more on Quest).
             var pool = VRZ.Network.NetworkManager.instance != null ? VRZ.Network.NetworkManager.instance.ObjectPool : null;
@@ -126,10 +123,12 @@ namespace VRZ.Enemies{
             if (WaitingForPlayers){
                 int ready = CountReadyPlayers();
 
+#if VRZ_NET_DIAGNOSTICS
                 if (_waitLogTimer.ExpiredOrNotRunning(Runner)){
                     Debug.Log("[Waves] Players ready: " + ready + "/" + RequiredReady);
                     _waitLogTimer = TickTimer.CreateFromSeconds(Runner, 3f);
                 }
+#endif
 
                 if (ready >= RequiredReady){
                     WaitingForPlayers = false;
@@ -199,7 +198,7 @@ namespace VRZ.Enemies{
             _spawnedThisWave.RemoveAll(z => z == null);
             int count = 0;
             foreach (var z in _spawnedThisWave){
-                // R7 cleanup: the old "spawn in flight" branch (Object not yet valid counts as alive)
+                // The old "spawn in flight" branch (Object not yet valid counts as alive)
                 // came from Host Mode, where a client's Spawn is deferred. In Shared Mode
                 // Runner.Spawn attaches synchronously on the authority, so an invalid Object here
                 // only means "already despawned": not alive.
@@ -240,7 +239,7 @@ namespace VRZ.Enemies{
 #if VRZ_NET_DIAGNOSTICS
             var sw = System.Diagnostics.Stopwatch.StartNew();
 #endif
-            // R7 cleanup: no inputAuthority argument. In Shared Mode the spawning client is the
+            // No inputAuthority argument. In Shared Mode the spawning client is the
             // State Authority; the PlayerRef the old call passed was never read by the zombie.
             var zombieObj = Runner.Spawn(zombiePrefab, pos, rot);
 #if VRZ_NET_DIAGNOSTICS
@@ -254,8 +253,10 @@ namespace VRZ.Enemies{
                     _aliveDirty = true;
                 }
 
+#if VRZ_NET_DIAGNOSTICS
                 Debug.Log("[Waves] Zombie spawned (" + _spawnedThisWave.Count + " this wave, " +
                           (ZombiesLeftToSpawn - 1) + " left to spawn)");
+#endif
             }
         }
 

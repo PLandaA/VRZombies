@@ -1,12 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using TMPro;
-using VRZ.Core;
-using VRZ.Network;
-using VRZ.Player;
-using VRZ.Weapons;
 using VRZ.Enemies;
-using VRZ.World;
 
 namespace VRZ.FX
 {
@@ -40,7 +35,7 @@ namespace VRZ.FX
             _intense = MakeLayer(intenseLayer);
             if (_intense != null) _intense.volume = 0f;
 
-            if (spawner == null) spawner = ZombieSpawner.Current;   // self-registered (fix A8)
+            if (spawner == null) spawner = ZombieSpawner.Current;   // self-registered, see ZombieSpawner.Current
             if (spawner != null)
             {
                 spawner.OnWaveStarted.AddListener(OnWaveStarted);
@@ -60,7 +55,6 @@ namespace VRZ.FX
 
         private IEnumerator SlowMo()
         {
-            Debug.Log("[SlowMo] Round clear -- cinematic beat");
             float baseScale = Time.timeScale;
             float baseFixed = Time.fixedDeltaTime;
             Time.timeScale = 0.45f;

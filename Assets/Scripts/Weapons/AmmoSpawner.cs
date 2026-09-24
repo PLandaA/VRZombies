@@ -1,12 +1,7 @@
 using UnityEngine;
 using Fusion;
 using Autohand;
-using VRZ.Core;
-using VRZ.Network;
-using VRZ.Player;
 using VRZ.Enemies;
-using VRZ.FX;
-using VRZ.World;
 
 namespace VRZ.Weapons
 {
@@ -27,7 +22,7 @@ namespace VRZ.Weapons
 
         public override void Spawned()
         {
-            _waveSystem = ZombieSpawner.Current;   // self-registered (fix A8)
+            _waveSystem = ZombieSpawner.Current;   // self-registered, see ZombieSpawner.Current
             if (_waveSystem != null)
                 _waveSystem.OnIntermissionStarted.AddListener(OnIntermission);
             else
@@ -88,7 +83,7 @@ namespace VRZ.Weapons
                 var p = spawnPoints[i % spawnPoints.Length];
                 Runner.Spawn(ammoPrefab, p.position, p.rotation);
 
-                // Netcode fix A2. The size comes from the PREFAB (its root is already scaled 2.02,
+                // The size comes from the PREFAB (its root is already scaled 2.02,
                 // same as the scene magazines and the markers), never from the marker: this only
                 // runs on the State Authority and the mag's NetworkTransform has SyncScale off, so
                 // a marker-driven scale would show one size on the master and another on proxies.

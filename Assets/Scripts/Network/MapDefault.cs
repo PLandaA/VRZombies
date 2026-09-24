@@ -1,13 +1,8 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Fusion;
 using System.Linq;
 using VRZ.Core;
-using VRZ.Player;
-using VRZ.Weapons;
-using VRZ.Enemies;
-using VRZ.FX;
 using VRZ.World;
 
 namespace VRZ.Network
@@ -40,7 +35,8 @@ namespace VRZ.Network
                     localCharacter.position = new Vector3 (0, 3, 0);
                 }
                 var spawned = runner.Spawn(networkCharacterPrefab, localCharacter.position, localCharacter.rotation,playerRef);
-                Debug.Log("[Map] Avatar spawned: " + (spawned != null ? spawned.name : "SPAWN FAILED"));
+                if (spawned != null) Debug.Log("[Map] Avatar spawned: " + spawned.name);
+                else Debug.LogError("[Map] Avatar spawn FAILED: the partner will not see this player.");
             }
         }
 

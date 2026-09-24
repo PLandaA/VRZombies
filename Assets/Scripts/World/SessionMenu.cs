@@ -6,7 +6,7 @@ using VRZ.Network;
 
 namespace VRZ.World
 {
-    /// Lobby-scene menu for creating or joining a room (netcode fix B2).
+    /// Lobby-scene menu for creating or joining a room.
     ///
     /// Talks only to NetworkManager: reads State / Sessions / CurrentCode / LastError, and calls
     /// CreateSession() or JoinSession(name). Never touches the runner. Hides itself once the

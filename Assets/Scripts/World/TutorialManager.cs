@@ -2,11 +2,6 @@ using System.Collections;
 using UnityEngine;
 using VRZ.Core;
 using Autohand;
-using VRZ.Network;
-using VRZ.Player;
-using VRZ.Weapons;
-using VRZ.Enemies;
-using VRZ.FX;
 
 namespace VRZ.World
 {
@@ -162,7 +157,7 @@ namespace VRZ.World
 
         /// Flags the LOCAL player's networked TutorialDone so the lobby can gate the match start.
         ///
-        /// Netcode debt #4. Waiting is normal here: since the session menu (B2) the tutorial can be
+        /// Waiting is normal here: since the session menu the tutorial can be
         /// finished before any room exists, so we must keep the flag pending until the player
         /// connects. What is NOT normal is a running session whose local NetworkPlayer never
         /// shows up (spawn failed): that used to stall the lobby forever with no clue. We keep

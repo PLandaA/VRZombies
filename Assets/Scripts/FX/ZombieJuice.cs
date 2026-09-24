@@ -1,18 +1,11 @@
-using System.Collections;
 using UnityEngine;
-using TMPro;
-using VRZ.Core;
-using VRZ.Network;
-using VRZ.Player;
-using VRZ.Weapons;
 using VRZ.Enemies;
-using VRZ.World;
 
 namespace VRZ.FX
 {
 
     /// Death celebration: blood puff on every client + floating score popup ("+10" / "+25 HEADSHOT")
-    /// only on the killer's client (netcode fix A5: the zombie's replicated LastDamager decides).
+    /// only on the killer's client (the zombie's replicated LastDamager decides).
     /// Death sounds live natively in NetworkZombie. Subscribes to OnDiedRender.
     public class ZombieJuice : MonoBehaviour
     {

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace VRZ.Network
 {
-    /// Object pool for Fusion spawns (netcode debt D1).
+    /// Object pool for Fusion spawns.
     ///
     /// Fusion 2 ships no pooling: NetworkObjectProviderDefault does Instantiate on Spawn and
     /// Destroy on Despawn. This subclass keeps the two hooks it exposes, InstantiatePrefab and

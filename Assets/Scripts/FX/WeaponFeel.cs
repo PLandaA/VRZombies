@@ -3,12 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using Autohand;
 using MoreMountains.Feedbacks;
-using VRZ.Core;
-using VRZ.Network;
-using VRZ.Player;
-using VRZ.Weapons;
-using VRZ.Enemies;
-using VRZ.World;
 
 namespace VRZ.FX
 {

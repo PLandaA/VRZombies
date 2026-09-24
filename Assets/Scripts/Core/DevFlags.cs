@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace VRZ.Core
 {
-    /// Development-only switches (netcode fix B3).
+    /// Development-only switches.
     ///
     /// The old approach was to leave test values in the scene (requiredPlayers = 1,
     /// maxHealth = 10000) and remember to put them back before a build. Nobody did, so the whole
@@ -28,9 +28,11 @@ namespace VRZ.Core
         public const bool Invulnerable = false;
 #endif
 
-        // VRZ_NET_DIAGNOSTICS: periodic netcode diagnostics ([Zombie N] path state, [Waves] Spawn took,
-        // [NetGun] held, [SnapTurnFix] hand-vs-controller trace). Off by default, even in development
-        // builds: they did their job during the hardening pass and would otherwise flood the console.
+        // VRZ_NET_DIAGNOSTICS: periodic diagnostics ([Zombie N] path state, [Waves] Spawn took,
+        // [NetGun] held, [SnapTurnFix] hand-vs-controller trace, and the editor-only [PhysStep]
+        // physics-step monitor with its profiler-based hitch autopsy). Off by default, even in
+        // development builds: they did their job during the hardening pass and would otherwise flood
+        // the console (and the profiler recording slows the editor down).
         // The code sites use `#if VRZ_NET_DIAGNOSTICS` directly so the diagnostics compile out.
 #if VRZ_NET_DIAGNOSTICS
         public const bool NetDiagnostics = true;
@@ -44,9 +46,17 @@ namespace VRZ.Core
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void WarnIfActive()
         {
-            if (SoloTest) Debug.LogWarning("[DevFlags] VRZ_SOLO_TEST is ON: lobby and waves start with 1 player.");
-            if (Invulnerable) Debug.LogWarning("[DevFlags] VRZ_INVULNERABLE is ON: the local player takes no damage.");
-            if (NetDiagnostics) Debug.LogWarning("[DevFlags] VRZ_NET_DIAGNOSTICS is ON: periodic netcode diagnostics will be logged.");
+            // #if rather than `if (SoloTest)`: the flags are constants, so a plain if on a false
+            // constant is unreachable code (compiler warning CS0162) in every normal build.
+#if VRZ_SOLO_TEST
+            Debug.LogWarning("[DevFlags] VRZ_SOLO_TEST is ON: lobby and waves start with 1 player.");
+#endif
+#if VRZ_INVULNERABLE
+            Debug.LogWarning("[DevFlags] VRZ_INVULNERABLE is ON: the local player takes no damage.");
+#endif
+#if VRZ_NET_DIAGNOSTICS
+            Debug.LogWarning("[DevFlags] VRZ_NET_DIAGNOSTICS is ON: periodic netcode diagnostics will be logged.");
+#endif
         }
     }
 }

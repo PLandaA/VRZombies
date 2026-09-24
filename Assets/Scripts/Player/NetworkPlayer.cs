@@ -1,12 +1,7 @@
 using Fusion;
 using UnityEngine;
 using VRZ.Core;
-using UnityEngine.Events;
 using VRZ.Network;
-using VRZ.Weapons;
-using VRZ.Enemies;
-using VRZ.FX;
-using VRZ.World;
 
 namespace VRZ.Player
 {
@@ -40,9 +35,6 @@ namespace VRZ.Player
         [Networked, OnChangedRender(nameof(OnDeathChanged))]
         public NetworkBool IsDead { get; private set; }
 
-        public UnityEvent<int, int> OnHealthChangedEvent;
-        public UnityEvent OnDiedEvent;
-
         public int MaxHealth => maxHealth;
 
         public override void Spawned()
@@ -67,11 +59,11 @@ namespace VRZ.Player
         /// damage indicator -- in VR you have no rear peripheral vision to tell you who bit you.
         public event System.Action<Vector3> OnDamagedFrom;
 
-        /// IPlayerState.OnHealthChanged: C# event mirror of the OnHealthChangedEvent UnityEvent,
-        /// raised from Fusion's OnChangedRender on every client (debt D4: readers stop polling).
+        /// IPlayerState.OnHealthChanged: raised on every client from Fusion's OnChangedRender
+        /// on the replicated Health (readers subscribe instead of polling).
         public event System.Action<int, int> OnHealthChanged;
 
-        /// IPlayerState.OnDied: C# mirror of OnDiedEvent (raised from the IsDead OnChangedRender).
+        /// IPlayerState.OnDied: raised on every client from the IsDead OnChangedRender.
         public event System.Action OnDied;
 
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
@@ -79,8 +71,10 @@ namespace VRZ.Player
         {
             if (IsDead) return;
             // Testing without dying is a compile-time switch (Core/DevFlags.cs), not a 10000-HP
-            // prefab. Health/MaxHealth stay real so the HUD and heartbeat still make sense.
-            if (DevFlags.Invulnerable) amount = 0;
+            // prefab. Health/MaxHealth stay real so the damage vignette and heartbeat still make sense.
+#if VRZ_INVULNERABLE
+            amount = 0;
+#endif
             Health = Mathf.Max(0, Health - amount);
             if (attackerPos != Vector3.zero)
                 OnDamagedFrom?.Invoke(attackerPos);
@@ -90,13 +84,12 @@ namespace VRZ.Player
 
         private void OnHealthChangedRender()
         {
-            OnHealthChangedEvent?.Invoke(Health, maxHealth);
             OnHealthChanged?.Invoke(Health, maxHealth);
         }
 
         private void OnDeathChanged()
         {
-            if (IsDead) { OnDiedEvent?.Invoke(); OnDied?.Invoke(); }
+            if (IsDead) OnDied?.Invoke();
         }
     }
 }

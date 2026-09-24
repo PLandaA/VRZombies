@@ -4,11 +4,7 @@ using VRZ.Core;
 using UnityEngine.UI;
 using TMPro;
 using Fusion;
-using VRZ.Network;
-using VRZ.Player;
-using VRZ.Weapons;
 using VRZ.Enemies;
-using VRZ.FX;
 
 namespace VRZ.World
 {
@@ -32,7 +28,7 @@ namespace VRZ.World
             Instance = go.AddComponent<GameOverController>();
         }
 
-        // Netcode fix A8 (event form). No Update at all: the spawner raises a static event from
+        // No Update at all: the spawner raises a static event from
         // its OnChangedRender the frame GameOver turns true, on every client. The controller is
         // DDOL and the event is static, so one subscription in OnEnable covers every scene and
         // every spawner instance without a single lookup.
@@ -46,7 +42,7 @@ namespace VRZ.World
             StartCoroutine(Sequence("GAME OVER", BuildTeamRecap(), HoldSeconds, new Color(0.75f, 0.1f, 0.1f)));
         }
 
-        /// End the match from outside the GameOver flag (netcode fix B4: the master client left
+        /// End the match from outside the GameOver flag (the master client left
         /// and took the wave spawner and every zombie with it). Same fade + shutdown + return to
         /// lobby, with a custom title and message and a shorter hold.
         public void EndMatch(string title, string message, float holdSeconds)
@@ -56,7 +52,7 @@ namespace VRZ.World
             StartCoroutine(Sequence(title, message, holdSeconds, new Color(0.9f, 0.6f, 0.15f)));
         }
 
-        /// Netcode fix A6. Every NetworkPlayer's score/kills already travel by snapshot; nobody
+        /// Every NetworkPlayer's score/kills already travel by snapshot; nobody
         /// was reading the partner's. One line per player (YOU first) plus the team total, so the
         /// end screen finally shows the co-op result instead of a solo recap.
         private static string BuildTeamRecap()

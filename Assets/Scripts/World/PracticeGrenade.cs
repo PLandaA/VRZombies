@@ -3,10 +3,6 @@ using UnityEngine;
 using VRZ.Core;
 using UnityEngine.Events;
 using Autohand;
-using VRZ.Network;
-using VRZ.Player;
-using VRZ.Weapons;
-using VRZ.Enemies;
 using VRZ.FX;
 
 namespace VRZ.World

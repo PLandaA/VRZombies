@@ -3,11 +3,7 @@ using VRZ.Core;
 using System.Reflection;
 using Fusion;
 using Autohand;
-using VRZ.Network;
-using VRZ.Player;
-using VRZ.Enemies;
 using VRZ.FX;
-using VRZ.World;
 
 namespace VRZ.Weapons
 {
@@ -17,7 +13,7 @@ namespace VRZ.Weapons
     /// Networked rifle: tick-synced shot effects and shooter-authoritative hit damage over Fusion 2 Shared Mode.
     public class NetworkAutoGun : NetworkBehaviour
     {
-        // NetworkedAmmo removed (netcode debt #5): it mirrored the magazine's count, which
+        // No NetworkedAmmo here: it would mirror the magazine's count, which
         // NetworkAutoAmmo already replicates, and nothing ever read it.
         [Networked] private int LastShootTick { get; set; }
         [Networked] private Vector3 SlideLocalPosition { get; set; }
@@ -324,7 +320,7 @@ namespace VRZ.Weapons
             {
                 bool critical = target.IsCriticalHit(hit.point);
                 int dmg = critical ? bulletDamage * 2 : bulletDamage;
-                // Netcode fix A5: no kill prediction here. The zombie's State Authority decides
+                // No kill prediction here. The zombie's State Authority decides
                 // who killed it (LastDamager) and NetworkZombie.Render credits the local player.
                 target.ApplyDamage(new DamageInfo(dmg, hit.point, _gun.shootForward.position, critical));
                 if (_feel != null) _feel.PlayHitmarker(critical);

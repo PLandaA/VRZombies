@@ -3,11 +3,6 @@ using UnityEngine;
 using VRZ.Core;
 using UnityEngine.UI;
 using Autohand;
-using VRZ.Network;
-using VRZ.Weapons;
-using VRZ.Enemies;
-using VRZ.FX;
-using VRZ.World;
 
 namespace VRZ.Player
 {
@@ -204,7 +199,7 @@ namespace VRZ.Player
             if (!_subscribed)
             {
                 _localPlayer.OnDamagedFrom += OnDamagedFrom;
-                _localPlayer.OnHealthChanged += OnHealthChanged;   // debt D4: event, not polling
+                _localPlayer.OnHealthChanged += OnHealthChanged;   // event, not polling
                 _lastHealth = _localPlayer.Health;
                 _subscribed = true;
             }

@@ -2,11 +2,6 @@ using UnityEngine;
 using Fusion;
 using TMPro;
 using VRZ.Core;
-using VRZ.Player;
-using VRZ.Weapons;
-using VRZ.Enemies;
-using VRZ.FX;
-using VRZ.World;
 
 namespace VRZ.Network
 {

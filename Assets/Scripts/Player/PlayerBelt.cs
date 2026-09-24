@@ -2,12 +2,7 @@ using System.Collections;
 using UnityEngine;
 using Fusion;
 using Autohand;
-using VRZ.Core;
-using VRZ.Network;
-using VRZ.Weapons;
 using VRZ.Enemies;
-using VRZ.FX;
-using VRZ.World;
 
 namespace VRZ.Player
 {
@@ -80,7 +75,7 @@ namespace VRZ.Player
             // Small settle delay so PlacePoints and physics are ready
             yield return new WaitForSeconds(1f);
 
-            _waveSystem = ZombieSpawner.Current;   // self-registered (fix A8)
+            _waveSystem = ZombieSpawner.Current;   // self-registered, see ZombieSpawner.Current
             if (_waveSystem != null)
                 _waveSystem.OnIntermissionStarted.AddListener(OnIntermission);
             else

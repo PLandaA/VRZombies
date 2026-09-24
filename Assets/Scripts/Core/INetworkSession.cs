@@ -21,7 +21,7 @@ namespace VRZ.Core
 
         /// Fired on every client (owner and proxies) when the replicated Health changes, from
         /// Fusion's OnChangedRender. Presentation should subscribe to this instead of polling
-        /// Health every frame (netcode debt D4). Arguments: (health, maxHealth).
+        /// Health every frame. Arguments: (health, maxHealth).
         event System.Action<int, int> OnHealthChanged;
 
         /// Fired on every client when the replicated IsDead flips to true (Fusion OnChangedRender).

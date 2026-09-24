@@ -4,10 +4,7 @@ using VRZ.Core;
 using Fusion;
 using Autohand;
 using VRZ.Network;
-using VRZ.Player;
-using VRZ.Enemies;
 using VRZ.FX;
-using VRZ.World;
 
 namespace VRZ.Weapons
 {
@@ -69,7 +66,7 @@ namespace VRZ.Weapons
             _grabbable.OnGrabEvent += OnGrabbed;
             _grabbable.OnReleaseEvent += OnReleased;
 
-            // Netcode fix A4: grenades are personal. Only the client that spawned this one (its
+            // Grenades are personal. Only the client that spawned this one (its
             // State Authority) may grab it; the partner's hands ignore it (no highlight, no grab,
             // no distance grab). AutoHand checks this flag in Grabbable.CanGrab, which every grab
             // path goes through. The prefab has no AllowStateAuthorityOverride, so authority can
@@ -158,7 +155,7 @@ namespace VRZ.Weapons
 
                 float dist = Vector3.Distance(target.Position, transform.position);
                 int dmg = GrenadeRules.ZombieDamage(dist, explosionRadius, zombieDamage);   // pure rule, unit-tested
-                // Netcode fix A5: no kill prediction; the victim's State Authority names the killer.
+                // No kill prediction; the victim's State Authority names the killer.
                 target.ApplyDamage(new DamageInfo(dmg, target.Position, transform.position));
             }
 
@@ -169,7 +166,7 @@ namespace VRZ.Weapons
             DamagePlayerIfInRange(session.GetPlayer(),
                 AutoHandPlayer.Instance != null ? AutoHandPlayer.Instance.transform : null);
 
-            // Remote avatars, from the registry (debt D3: no scene scan per explosion)
+            // Remote avatars, from the registry (no scene scan per explosion)
             var nm = NetworkManager.instance;
             if (nm == null) return;
             foreach (var rig in nm.Rigs)

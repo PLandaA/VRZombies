@@ -4,10 +4,6 @@ using UnityEngine.AI;
 using Fusion;
 using Autohand;
 using VRZ.Network;
-using VRZ.Player;
-using VRZ.Weapons;
-using VRZ.FX;
-using VRZ.World;
 
 namespace VRZ.Enemies
 {
@@ -57,7 +53,7 @@ namespace VRZ.Enemies
         [Networked] public NetworkBool DiedByHeadshot { get; private set; }
         [Networked] public float AnimSpeed { get; private set; }
 
-        /// Netcode fix A5. Who landed the last damage, written by the State Authority inside
+        /// Who landed the last damage, written by the State Authority inside
         /// RPC_TakeDamage from the RPC's own sender (RpcInfo.Source), so it cannot be spoofed by
         /// the attacker and needs no extra parameter. At death it names the killer; every client
         /// reads it in Render and only the matching local player credits the kill.
@@ -123,7 +119,7 @@ namespace VRZ.Enemies
                 _walkAudio.pitch = 0.85f + (Object.Id.Raw % 40) * 0.01f;   // 0.85-1.24: wide spread
                 _walkAudio.time = (Object.Id.Raw % 100) * 0.01f * walkSound.length;   // desync loops
             }
-            // Netcode fix A1. The old gate read the NavMeshAgent's velocity, but the agent is only
+            // The old gate read the NavMeshAgent's velocity, but the agent is only
             // enabled on the State Authority (Spawned), so proxies never played footsteps: the
             // non-master player could not hear zombies approach. AnimSpeed is the master's
             // |velocity| / runSpeed (0..1), replicated every tick and read by every client for the
@@ -147,7 +143,7 @@ namespace VRZ.Enemies
                 if (t.name.Contains("HumanHead")) { HeadBone = t; break; }
         }
 
-        /// Netcode debt #1 (pool readiness). Raised from Spawned on every client, AFTER this
+        /// Pool readiness. Raised from Spawned on every client, AFTER this
         /// component has cleared its own per-life state, so sibling presentation scripts
         /// (ZombieHitFlash, ZombieFeel, ...) can clear theirs too. Without this, an
         /// INetworkObjectProvider pool would hand out corpses: colliders off, red tint, death
@@ -220,7 +216,7 @@ namespace VRZ.Enemies
             base.Despawned(runner, hasState);
         }
 
-        // Measurement for netcode debt #2 (DisableSharedModeInterpolation on the zombie prefab).
+        // Measurement for DisableSharedModeInterpolation on the zombie prefab (VRZ_NET_DIAGNOSTICS).
         // On the State Authority the NavMeshAgent moves the transform in Update; if Fusion's
         // shared-mode interpolation is active on the authority, NetworkTransform.Render then
         // rewrites the transform ~1 tick behind the agent. The agent keeps its own idea of where
@@ -398,7 +394,7 @@ namespace VRZ.Enemies
                         animator.SetTrigger(dieParam);
                         OnDiedRender?.Invoke(DiedByHeadshot);
 
-                        // Netcode fix A5: the kill is credited HERE, from the master's verdict
+                        // The kill is credited HERE, from the master's verdict
                         // (LastDamager arrives in the same snapshot as State == Dead), and only on
                         // the killer's client. Weapons no longer predict kills from stale health,
                         // so two shooters can no longer both bank the same zombie, and a shooter
@@ -468,7 +464,7 @@ namespace VRZ.Enemies
             if (ahp != null && ahp.gameObject.activeInHierarchy)
                 candidates.Add(ahp.headCamera != null ? ahp.headCamera.transform : ahp.transform);
 
-            // Remote players: the avatars registered by NetworkRig.Spawned (debt D3, no scene scan).
+            // Remote players: the avatars registered by NetworkRig.Spawned (no scene scan).
             var nm = NetworkManager.instance;
             if (nm != null)
             {
