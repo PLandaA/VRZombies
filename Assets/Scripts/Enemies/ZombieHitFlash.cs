@@ -4,6 +4,8 @@ namespace VRZ.Enemies
 {
 
     /// Red hit-flash feedback on zombies via MaterialPropertyBlock whenever networked health drops.
+    /// Event-driven: listens to NetworkZombie.OnHealthChanged instead of reading Health every frame;
+    /// Update only animates the tint while a flash is running.
     public class ZombieHitFlash : MonoBehaviour
     {
         [Tooltip("Flash duration in seconds")]
@@ -17,7 +19,6 @@ namespace VRZ.Enemies
         private NetworkZombie _zombie;
         private Renderer[] _renderers;
         private MaterialPropertyBlock _mpb;
-        private int _lastHealth = int.MinValue;
         private float _timer;
 
         private void Awake()
@@ -27,36 +28,40 @@ namespace VRZ.Enemies
             _mpb = new MaterialPropertyBlock();
         }
 
-        private void OnEnable()  { if (_zombie != null) _zombie.OnLocalReset += ResetForNewLife; }
-        private void OnDisable() { if (_zombie != null) _zombie.OnLocalReset -= ResetForNewLife; }
+        private void OnEnable()
+        {
+            if (_zombie == null) return;
+            _zombie.OnLocalReset += ResetForNewLife;
+            _zombie.OnHealthChanged += OnHealthChanged;
+        }
 
-        /// Pool readiness: forget the previous life's health and drop any red tint still showing.
+        private void OnDisable()
+        {
+            if (_zombie == null) return;
+            _zombie.OnLocalReset -= ResetForNewLife;
+            _zombie.OnHealthChanged -= OnHealthChanged;
+        }
+
+        /// Pool readiness: drop any red tint still showing from the previous life.
         private void ResetForNewLife()
         {
-            _lastHealth = int.MinValue;
             _timer = 0f;
             ClearTint();
         }
 
+        private void OnHealthChanged(int previous, int current)
+        {
+            if (current < previous) _timer = flashDuration;
+        }
+
         private void Update()
         {
-            if (_zombie != null && _zombie.Object != null && _zombie.Object.IsValid)
-            {
-                int h = _zombie.Health;
-                if (_lastHealth == int.MinValue)
-                    _lastHealth = h;
-                else if (h < _lastHealth)
-                    _timer = flashDuration;
-                _lastHealth = h;
-            }
+            if (_timer <= 0f) return;   // idle: nothing to animate, nothing to read
 
-            if (_timer > 0f)
-            {
-                _timer -= Time.deltaTime;
-                float t = Mathf.Clamp01(_timer / flashDuration);
-                ApplyTint(Color.Lerp(Color.white, flashColor, t));
-                if (_timer <= 0f) ClearTint();
-            }
+            _timer -= Time.deltaTime;
+            float t = Mathf.Clamp01(_timer / flashDuration);
+            ApplyTint(Color.Lerp(Color.white, flashColor, t));
+            if (_timer <= 0f) ClearTint();
         }
 
         private void ApplyTint(Color c)

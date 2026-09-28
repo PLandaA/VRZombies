@@ -48,7 +48,21 @@ namespace VRZ.Enemies
         [SerializeField] private string attackParam = "Attack";
         [SerializeField] private string dieParam = "Die";
 
-        [Networked] public int Health { get; private set; }
+        [Networked, OnChangedRender(nameof(OnHealthChangedRender))]
+        public int Health { get; private set; }
+
+        /// Raised on every client when the replicated Health changes: (previous, current).
+        /// Presentation (hit flash, hit punch) listens to this instead of reading Health every
+        /// frame. Fusion calls OnChangedRender from its render loop, once per observed change.
+        public event System.Action<int, int> OnHealthChanged;
+        private int _lastRenderedHealth;
+
+        private void OnHealthChangedRender()
+        {
+            int previous = _lastRenderedHealth;
+            _lastRenderedHealth = Health;
+            OnHealthChanged?.Invoke(previous, Health);
+        }
         [Networked] public ZombieState State { get; private set; }
         [Networked] public NetworkBool DiedByHeadshot { get; private set; }
         [Networked] public float AnimSpeed { get; private set; }
@@ -180,6 +194,10 @@ namespace VRZ.Enemies
                 }
             }
             base.Spawned();
+            // Baseline for OnHealthChanged: the authority just wrote maxHealth, proxies received it.
+            // Fusion does not raise OnChangedRender for the spawn value itself, and a pooled
+            // instance must not compare against its previous life's health.
+            _lastRenderedHealth = Health;
             OnLocalReset?.Invoke();
         }
 

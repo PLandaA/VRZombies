@@ -47,9 +47,18 @@ namespace VRZ.Player
         public static void Aim(Transform shoulder, Transform handTarget, Transform hint, Transform body,
                                Vector3 bodySpaceOffset, float side, float scale, float k)
         {
-            if (shoulder == null || handTarget == null || hint == null || body == null) return;
+            if (shoulder == null) return;
+            Aim(shoulder.position, handTarget, hint, body, bodySpaceOffset, side, scale, k);
+        }
 
-            if (TryCompute(shoulder.position, handTarget.position, body.right, body.forward,
+        /// Same, from a shoulder POSITION: use a rest-pose anchor here rather than the live shoulder bone,
+        /// which the IK solver moves according to this very hint (a feedback loop that oscillates).
+        public static void Aim(Vector3 shoulderPos, Transform handTarget, Transform hint, Transform body,
+                               Vector3 bodySpaceOffset, float side, float scale, float k)
+        {
+            if (handTarget == null || hint == null || body == null) return;
+
+            if (TryCompute(shoulderPos, handTarget.position, body.right, body.forward,
                            bodySpaceOffset, side, scale, out Vector3 goal))
                 hint.position = Vector3.Lerp(hint.position, goal, k);
         }

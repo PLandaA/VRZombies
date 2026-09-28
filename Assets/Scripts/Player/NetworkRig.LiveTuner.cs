@@ -50,9 +50,19 @@ namespace VRZ.Player
             if (kb.pageUpKey.wasPressedThisFrame) NudgePos(new Vector3(0f, 0f, +0.01f));
             if (kb.pageDownKey.wasPressedThisFrame) NudgePos(new Vector3(0f, 0f, -0.01f));
 
+            // Elbow hints and arm length are applied locally on every client, so publish them for
+            // the partner's view of this avatar (wrist offsets already travel with the IK targets).
+            void PublishTuning()
+            {
+                TunedLive = true;
+                TunedElbowHintOffset = elbowHintOffset;
+                TunedArmLengthScale = armLengthScale;
+            }
+
             void NudgeElbow(Vector3 delta)
             {
                 elbowHintOffset += delta;
+                PublishTuning();
                 Debug.Log("[RigTuner] elbowHintOffset -> " + elbowHintOffset.ToString("F2"));
             }
             if (kb.tKey.wasPressedThisFrame) NudgeElbow(new Vector3(+0.02f, 0f, 0f));
@@ -65,6 +75,7 @@ namespace VRZ.Player
             if (kb.minusKey.wasPressedThisFrame || kb.equalsKey.wasPressedThisFrame)
             {
                 armLengthScale = Mathf.Clamp(armLengthScale + (kb.equalsKey.wasPressedThisFrame ? 0.02f : -0.02f), 0.7f, 1.4f);
+                PublishTuning();
                 Debug.Log("[RigTuner] armLengthScale -> " + armLengthScale.ToString("F2"));
             }
 

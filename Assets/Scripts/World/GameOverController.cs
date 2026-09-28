@@ -38,8 +38,14 @@ namespace VRZ.World
         private void OnGameOver(ZombieSpawner spawner)
         {
             if (_running) return;
+            // The recap is presentation: if building it ever throws, log it and end the match anyway.
+            // (It once did, with a "Collection was modified" from the player list, and because
+            // _running was already set the sequence never started: both players stayed spectating.)
+            string recap;
+            try { recap = BuildTeamRecap(); }
+            catch (System.Exception e) { Debug.LogException(e); recap = ""; }
             _running = true;
-            StartCoroutine(Sequence("GAME OVER", BuildTeamRecap(), HoldSeconds, new Color(0.75f, 0.1f, 0.1f)));
+            StartCoroutine(Sequence("GAME OVER", recap, HoldSeconds, new Color(0.75f, 0.1f, 0.1f)));
         }
 
         /// End the match from outside the GameOver flag (the master client left
@@ -74,12 +80,14 @@ namespace VRZ.World
             }
 
             if (me != null && me.IsValid) Line("YOU", me);
+            // Snapshot first: never enumerate the live session list while also reading it.
+            var players = new System.Collections.Generic.List<IPlayerState>(session.Players);
             int partnerIndex = 0;
-            foreach (var p in session.Players)
+            foreach (var p in players)
             {
                 if (p == null || !p.IsValid || p == me) continue;
                 partnerIndex++;
-                Line(partnerIndex == 1 && session.Players.Count <= 2 ? "PARTNER" : "PARTNER " + partnerIndex, p);
+                Line(partnerIndex == 1 && players.Count <= 2 ? "PARTNER" : "PARTNER " + partnerIndex, p);
             }
 
             if (partnerIndex > 0)

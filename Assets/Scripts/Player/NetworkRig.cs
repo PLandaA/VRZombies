@@ -89,6 +89,16 @@ namespace VRZ.Player
                  ">1 = longer arms. Tune live with -/= keys in the editor, P prints values.")]
         [Range(0.7f, 1.4f)]
         [SerializeField] private float armLengthScale = 1f;
+
+        // Live-tuner sync (editor calibration sessions only). Elbow hints and arm length are applied
+        // locally on EVERY client from that client's own copy of the two fields above, so values
+        // tuned live on the owner never reached the partner's view of this avatar. The owner
+        // publishes them here when it tunes (see NetworkRig.LiveTuner); proxies adopt them only once
+        // the owner has actually tuned (TunedLive), so a normal match uses the prefab values exactly
+        // as before.
+        [Networked] private NetworkBool TunedLive { get; set; }
+        [Networked] private Vector3 TunedElbowHintOffset { get; set; }
+        [Networked] private float TunedArmLengthScale { get; set; }
         private float _appliedArmScale = -1f;
 
         [Header("Visual Anchors")]
@@ -136,7 +146,7 @@ namespace VRZ.Player
             _vrik = GetComponentInChildren<RootMotion.FinalIK.VRIK>(true);
             if (_vrik == null)
                 Debug.LogWarning("[NetworkRig] No VRIK component found on the avatar!");
-            // Debt D3: register so zombies/grenades never scan the scene for avatars. Registry
+            // Register so zombies/grenades never scan the scene for avatars. Registry
             // only; does not touch the pose pipeline (the tick layer below is the committed one).
             if (VRZ.Network.NetworkManager.instance != null)
                 VRZ.Network.NetworkManager.instance.RegisterRig(this);
@@ -177,10 +187,16 @@ namespace VRZ.Player
         {
             if (Object == null || !Object.IsValid) return;
 
-            // Elbows are solved LOCALLY on every client (the hints are not networked), so this
-            // must run for proxies too -- otherwise the partner's elbows stay frozen in the pose
-            // the prefab shipped with.
-            UpdateElbowHints();
+            // Proxies adopt the owner's live-tuned elbow/arm values. No-op unless the owner used the
+            // editor live tuner in this session (TunedLive is false in every normal match).
+            if (!Object.HasStateAuthority && TunedLive)
+            {
+                elbowHintOffset = TunedElbowHintOffset;
+                armLengthScale = TunedArmLengthScale;
+            }
+
+            // Elbow hints are computed right before each SolveIK below (owner: after ApplyPose; proxies: on
+            // replicated targets). They are local on every client and not networked.
 
             // Local live layer: runs at full framerate AFTER Fusion's update (execution order
             // 9999) and BEFORE Animation Rigging evaluates, feeding the IK fresh tracking data
@@ -189,7 +205,7 @@ namespace VRZ.Player
             // Arm-length scale applies on EVERY client (the partner's avatar needs the same reach).
             ApplyArmScale();
 
-            if (!Object.HasStateAuthority) { SolveIK(); return; }
+            if (!Object.HasStateAuthority) { UpdateElbowHints(); SolveIK(); return; }
             if (_localPlayer == null)
             {
                 _localPlayer = FindFirstObjectByType<Autohand.AutoHandPlayer>();
@@ -224,8 +240,12 @@ namespace VRZ.Player
 
             // Physical hands buzz when they press against geometry; a tiny exponential filter
             // takes the buzz out of the arm without any perceptible lag behind the real hand.
-            if (hasRight) SmoothRight.Filter(ref hrPos, ref hrRot, handSmoothing, Time.deltaTime);
-            if (hasLeft) SmoothLeft.Filter(ref hlPos, ref hlRot, handSmoothing, Time.deltaTime);
+            // ...in PLAYER space (the tracking container), not world space: the filter must remove the hand's
+            // buzz, not the player's own walking and snap turns. In world space it smoothed those too and the
+            // arm target jittered against the hand while moving (measured 0.77 cm/frame walking, 0.00 standing).
+            Transform smoothSpace = _localPlayer.trackingContainer;
+            if (hasRight) FilterHand(SmoothRight, ref hrPos, ref hrRot, smoothSpace);
+            if (hasLeft) FilterHand(SmoothLeft, ref hlPos, ref hlRot, smoothSpace);
 
             ApplyPose(
                 _localPlayer.headCamera.transform.position, _localPlayer.headCamera.transform.rotation,
@@ -240,6 +260,7 @@ namespace VRZ.Player
             if (headVisual != null) headVisual.SetPositionAndRotation(
                 _localPlayer.headCamera.transform.position, _localPlayer.headCamera.transform.rotation);
 
+            UpdateElbowHints();   // after ApplyPose: this frame's targets, also on tick frames
             SolveIK();
 
     #if UNITY_EDITOR
@@ -247,12 +268,33 @@ namespace VRZ.Player
     #endif
         }
 
-        /// Solves VRIK NOW, with the targets written this frame. UpdateSolverExternal is Final IK's
-        /// official hook for driving the solve from another script; it also flags the component to
-        /// skip its own LateUpdate solve so we never pay for two per frame.
+        /// Solves VRIK exactly ONCE per frame, here, with the targets written this frame. The component's
+        /// own LateUpdate is kept off: UpdateSolverExternal only skips it until the next FixedUpdate
+        /// (SolverManager clears the flag there), so on every frame with a physics step VRIK solved twice,
+        /// first with the previous/tick targets and then with the fresh ones. Two solves with different
+        /// data made the shoulders oscillate between two solutions while aiming (~9 mm/frame, jumps of
+        /// 37 mm, measured with the hands perfectly still).
         private void SolveIK()
         {
-            if (_vrik != null) _vrik.UpdateSolverExternal();
+            if (_vrik == null) return;
+            if (_vrik.enabled) _vrik.enabled = false;              // OnDisable initiates the solver if Start has not run yet
+            var solver = _vrik.solver;
+            if (solver == null || !solver.initiated) return;
+            if (_vrik.references.root != null && _vrik.references.root.localScale == Vector3.zero) return;   // VRIK's own guard
+            if (_vrik.fixTransforms) solver.FixTransforms();       // what the component did in its Update
+            solver.Update();
+        }
+
+        /// Runs the hand buzz filter in `space` (the player's tracking container) when given, so the
+        /// filter only sees what the hand does RELATIVE to the player (null, no container: world space).
+        private void FilterHand(PoseSmoother smoother, ref Vector3 pos, ref Quaternion rot, Transform space)
+        {
+            if (space == null) { smoother.Filter(ref pos, ref rot, handSmoothing, Time.deltaTime); return; }
+            Vector3 localPos = space.InverseTransformPoint(pos);
+            Quaternion localRot = Quaternion.Inverse(space.rotation) * rot;
+            smoother.Filter(ref localPos, ref localRot, handSmoothing, Time.deltaTime);
+            pos = space.TransformPoint(localPos);
+            rot = space.rotation * localRot;
         }
 
         /// RESEARCH STAGE 2 via VRIK: arm reach calibration through the solver's own
@@ -266,6 +308,16 @@ namespace VRZ.Player
             _appliedArmScale = armLengthScale;
         }
 
+        // Shoulder anchors for the elbow hints, in body space, captured before VRIK ever solves.
+        private Vector3 _rightShoulderRest, _leftShoulderRest;
+
+        private void Awake()
+        {
+            if (body == null) return;
+            if (rightShoulderBone != null) _rightShoulderRest = body.InverseTransformPoint(rightShoulderBone.position);
+            if (leftShoulderBone != null) _leftShoulderRest = body.InverseTransformPoint(leftShoulderBone.position);
+        }
+
         /// Elbow hints are solved LOCALLY on every client (they are not networked).
         private void UpdateElbowHints()
         {
@@ -273,8 +325,12 @@ namespace VRZ.Player
             float scale = body.localScale.x <= 0.01f ? 1f : body.localScale.x;
             float k = 1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.01f, elbowSmoothing));
 
-            ElbowPole.Aim(rightShoulderBone, handRightTarget.targetTransform, rightElbowHint, body, elbowHintOffset, +1f, scale, k);
-            ElbowPole.Aim(leftShoulderBone, handLeftTarget.targetTransform, leftElbowHint, body, elbowHintOffset, -1f, scale, k);
+            // From the shoulder's REST position, not the live bone. The live bone is moved by VRIK (shoulder
+            // rotation, chest rotated by the hands) according to this very hint, so hint -> solve -> shoulder ->
+            // hint was a feedback loop with gain > 1: with the hands perfectly still the shoulder bone oscillated
+            // ~17 mm/frame (jumps up to 62 mm) and the arms visibly trembled while aiming.
+            ElbowPole.Aim(body.TransformPoint(_rightShoulderRest), handRightTarget.targetTransform, rightElbowHint, body, elbowHintOffset, +1f, scale, k);
+            ElbowPole.Aim(body.TransformPoint(_leftShoulderRest), handLeftTarget.targetTransform, leftElbowHint, body, elbowHintOffset, -1f, scale, k);
         }
 
         /// Single pose pipeline shared by the tick layer and the live layer.
@@ -297,18 +353,28 @@ namespace VRZ.Player
             var fit = Calibrator.Evaluate(headPos.y, floorY, dt);
             headPos.y = fit.HeadY;
 
+            // Body FIRST, IK targets AFTER. The three IK targets are CHILDREN of the body
+            // (HumanBody/VR_IK_Rig/...): placing them and THEN moving/rotating/scaling the body dragged them
+            // along by that frame's body motion. Standing still that is zero; walking, the head target ran
+            // ahead of the camera by (speed / framerate) and VRIK pulled the neck into view. Do not reorder.
+            PlaceBody(headPos, headRot, fit.Scale, fit.BodyY, dt);
+
             headTarget.SetPositionAndRotation(headPos, headRot);
             if (applyRight) handRightTarget.SetPositionAndRotation(handRPos, handRRot);
             if (applyLeft) handLeftTarget.SetPositionAndRotation(handLPos, handLRot);
+        }
 
+        /// Scale, position and yaw of the avatar body. Same math as always; ApplyPose decides the order.
+        private void PlaceBody(Vector3 headPos, Quaternion headRot, float fitScale, float bodyY, float dt)
+        {
             float sceneBoost = UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex >= 1 ? gameSceneScaleBoost : 1f;
-            body.localScale = Vector3.one * fit.Scale * sceneBoost;
+            body.localScale = Vector3.one * fitScale * sceneBoost;
 
             // Body anchored under the head, pushed slightly behind the view direction
             Vector3 yawFwd = Quaternion.Euler(0f, headRot.eulerAngles.y, 0f) * Vector3.forward;
             body.position = new Vector3(
                 headPos.x + headBodyPositionOffset.x - yawFwd.x * bodySpineOffset,
-                fit.BodyY,
+                bodyY,
                 headPos.z + headBodyPositionOffset.z - yawFwd.z * bodySpineOffset);
 
             // Framerate-independent yaw smoothing (exponential damp).

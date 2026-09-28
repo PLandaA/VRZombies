@@ -57,7 +57,7 @@ namespace VRZ.Player
         private IEnumerator InitialStock()
         {
             // The belt only makes sense in the arena. With the local character unified into one
-            // prefab (R11), this component also lives in the lobby, where there is no wave system:
+            // prefab, this component also lives in the lobby, where there is no wave system:
             // stay idle there instead of spawning two grenades next to the tutorial.
             if (ZombieSpawner.Current == null)
             {

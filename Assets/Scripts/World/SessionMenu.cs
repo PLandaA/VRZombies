@@ -45,32 +45,37 @@ namespace VRZ.World
         [SerializeField] private GameObject[] pointers;
 
         [Header("Hidden while the menu is open")]
-        [Tooltip("Lobby props that only get in the way before a room exists (tutorial signs, rifles, magazines). Their Renderers and Colliders are switched off while the menu is visible and restored to their ORIGINAL state on connect. Objects are never deactivated: scene NetworkObjects must stay registered with Fusion.")]
+        [Tooltip("Lobby props that only get in the way before a room exists (tutorial signs, rifles). While the menu is visible their Renderers are switched off and their AutoHand Grabbables disabled (nothing can be grabbed); both are restored to their ORIGINAL state on connect. Colliders and physics are never touched and objects are never deactivated. Do NOT list the lobby magazines: TutorialManager already hides them until the load step and owns their state.")]
         [SerializeField] private GameObject[] hiddenWhileMenu;
 
         private readonly System.Collections.Generic.Dictionary<Renderer, bool> _hiddenOriginal = new();
-        private readonly System.Collections.Generic.Dictionary<Collider, bool> _hiddenColliderOriginal = new();
+        private readonly System.Collections.Generic.Dictionary<Autohand.Grabbable, bool> _grabbableOriginal = new();
         private bool _propsHidden;
 
+        /// Same technique as TutorialManager.SetAmmoVisible: renderers + grabbability only.
+        /// Colliders stay on because a rigidbody resting on a surface with its collider off falls
+        /// through it (that is how the lobby magazines ended up under the bench), and re-enabling a
+        /// collider inside geometry makes PhysX eject the object. Scene NetworkObjects must also
+        /// stay active so Fusion keeps them registered.
         private void SetPropsHidden(bool hide)
         {
             if (hide == _propsHidden || hiddenWhileMenu == null) return;
             _propsHidden = hide;
             if (hide)
             {
-                _hiddenOriginal.Clear(); _hiddenColliderOriginal.Clear();
+                _hiddenOriginal.Clear(); _grabbableOriginal.Clear();
                 foreach (var go in hiddenWhileMenu)
                 {
                     if (go == null) continue;
                     foreach (var r in go.GetComponentsInChildren<Renderer>(true)) { _hiddenOriginal[r] = r.enabled; r.enabled = false; }
-                    foreach (var c in go.GetComponentsInChildren<Collider>(true)) { _hiddenColliderOriginal[c] = c.enabled; c.enabled = false; }
+                    foreach (var g in go.GetComponentsInChildren<Autohand.Grabbable>(true)) { _grabbableOriginal[g] = g.enabled; g.enabled = false; }
                 }
             }
             else
             {
                 foreach (var kv in _hiddenOriginal) if (kv.Key != null) kv.Key.enabled = kv.Value;
-                foreach (var kv in _hiddenColliderOriginal) if (kv.Key != null) kv.Key.enabled = kv.Value;
-                _hiddenOriginal.Clear(); _hiddenColliderOriginal.Clear();
+                foreach (var kv in _grabbableOriginal) if (kv.Key != null) kv.Key.enabled = kv.Value;
+                _hiddenOriginal.Clear(); _grabbableOriginal.Clear();
             }
         }
 

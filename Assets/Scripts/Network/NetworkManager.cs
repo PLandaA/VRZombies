@@ -18,7 +18,7 @@ namespace VRZ.Network
         public bool IsRunning => runner != null && runner.IsRunning;
         public PlayerRef LocalPlayer => runner != null ? runner.LocalPlayer : PlayerRef.None;
         public NetworkPlayer GetPlayer() => GetPlayer(default(PlayerRef));   // optional params don't satisfy interfaces
-        IReadOnlyCollection<IPlayerState> INetworkSession.Players => NetworkPlayers.Values;   // covariant view
+        IReadOnlyCollection<IPlayerState> INetworkSession.Players => Players;   // covariant view
         IPlayerState INetworkSession.GetPlayer() => GetPlayer();
         IPlayerState INetworkSession.GetPlayer(PlayerRef player) => GetPlayer(player);
 
@@ -27,11 +27,34 @@ namespace VRZ.Network
         [SerializeField] private GameObject networkRunnerPrefab;
         [SerializeField] private NetworkObject playerPrefab;
 
-        private Dictionary<PlayerRef, NetworkPlayer> NetworkPlayers = new();
+        // Player registry = Fusion's own PlayerRef -> NetworkObject association
+        // (Runner.SetPlayerObject in NetworkPlayer.Spawned). It is networked and replicated to every
+        // client, and it disappears on its own when a player's object is despawned, so there is no
+        // parallel dictionary to keep in sync on join/leave/shutdown.
+        private readonly List<NetworkPlayer> _players = new();
+        private int _playersFrame = -1;
 
-        /// Live registry of connected players (maintained on join/leave). Prefer this over
-        /// FindObjectsByType: it is already the cached answer.
-        public IReadOnlyCollection<NetworkPlayer> Players => NetworkPlayers.Values;
+        /// The players currently in the room that have a NetworkPlayer, from Runner.ActivePlayers.
+        /// Rebuilt AT MOST ONCE PER FRAME into one reused list (no allocation). Rebuilding on every
+        /// access broke any caller that read Players again while enumerating it: the second read
+        /// cleared the list under the first one's foreach ("Collection was modified"), which once
+        /// aborted the game over. Within a frame every reader now gets the same, unchanged list.
+        public IReadOnlyCollection<NetworkPlayer> Players
+        {
+            get
+            {
+                if (_playersFrame == Time.frameCount) return _players;
+                _playersFrame = Time.frameCount;
+                _players.Clear();
+                if (runner != null && runner.IsRunning)
+                    foreach (var p in runner.ActivePlayers)
+                    {
+                        var np = GetPlayer(p);
+                        if (np != null) _players.Add(np);
+                    }
+                return _players;
+            }
+        }
         public NetworkRunner runner;
 
         public UnityEvent OnConnectionStart;
@@ -46,7 +69,7 @@ namespace VRZ.Network
         public delegate void OnSceneLoadDoneDelegate(NetworkRunner runner);
         public event OnSceneLoadDoneDelegate onSceneLoadDone;
 
-        // ── Session menu (B2) ─────────────────────────────────────────────────────────────
+        // ── Session menu ─────────────────────────────────────────────────────────────
         // The manager no longer connects on Start. It first joins Photon's session LOBBY
         // (a directory, not a room) so the menu can list open rooms; the menu then asks us to
         // create a room with a random 2-digit code, or to join a listed one.
@@ -140,7 +163,7 @@ namespace VRZ.Network
             if (runner == null) return;
             SetState(SessionState.BrowsingLobby);
 
-            // D2: we are here because our previous create collided. Create again as soon as the
+            // We are here because our previous create collided. Create again as soon as the
             // room list arrives (we need it to pick a code that is not taken).
             if (RetryCreateAfterReload) { RetryCreateAfterReload = false; _createWhenListArrives = true; }
 
@@ -219,7 +242,7 @@ namespace VRZ.Network
 
             if (connectionResult.Ok)
             {
-                // Debt D2: "Create" with a 2-digit code that somebody else created in the same
+                // "Create" with a 2-digit code that somebody else created in the same
                 // instant does not fail: Fusion silently JOINS their room. Detect it: a room we
                 // just created must contain only us. If it does not, leave and try a new code.
                 if (_creating && runner.SessionInfo.IsValid && runner.SessionInfo.PlayerCount > 1)
@@ -252,38 +275,22 @@ namespace VRZ.Network
         }
 
         /// True while a CreateSession() is in flight, so ConnectGame can tell "I created this
-        /// room" from "I joined a listed one" (D2 collision check applies only to the former).
+        /// room" from "I joined a listed one" (the collision check applies only to the former).
         private bool _creating;
 
-        /// D2: set when a create collided; the next NetworkManager (after the lobby reload)
-        /// creates again automatically as soon as it has the room list, without a click.
+        /// Set when a create collided; the next NetworkManager (after the lobby reload) creates
+        /// again automatically as soon as it has the room list, without a click.
         public static bool RetryCreateAfterReload { get; private set; }
         private bool _createWhenListArrives;
-        public void AddPlayer(PlayerRef player, NetworkPlayer networkPlayer)
-        {
-            NetworkPlayers[player] = networkPlayer;
-            networkPlayer.transform.SetParent(runner.transform);
-        }
+
+        /// The NetworkPlayer of `player` (the local player when omitted), resolved through Fusion's
+        /// replicated player-object association. Null while that player has none yet (for a remote
+        /// player, for a moment after joining) or after it left.
         public NetworkPlayer GetPlayer(PlayerRef player = default)
         {
-            if (!runner) return null;
+            if (!runner || !runner.IsRunning) return null;
             if (player == default) player = runner.LocalPlayer;
-
-            NetworkPlayers.TryGetValue(player, out NetworkPlayer networkPlayer);
-            return networkPlayer;
-        }
-
-        public void RemovePlayer(PlayerRef player)
-        {
-            if (NetworkPlayers.ContainsKey(player))
-            {
-                NetworkPlayers.Remove(player);
-            }
-            else
-            {
-                Debug.LogWarning("This player: " + player + " not found");
-            }
-
+            return runner.TryGetPlayerObject(player, out var obj) && obj != null ? obj.GetComponent<NetworkPlayer>() : null;
         }
 
             private void SpawnPlayer(NetworkRunner runner, PlayerRef player)
@@ -368,7 +375,8 @@ namespace VRZ.Network
         public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
         {
             Debug.Log("[NetworkManager] Player left: " + player);
-            RemovePlayer(player);
+            // No registry cleanup: the leaver's NetworkPlayer is despawned with its State Authority,
+            // and Fusion drops the player-object association with it.
 
             bool inArena = SceneManager.GetActiveScene().buildIndex != 0;
             if (inArena) StartCoroutine(EndMatchIfOrphaned());
@@ -407,8 +415,9 @@ namespace VRZ.Network
         {
             Debug.Log("[NetworkManager] Runner shut down: " + shutdownReason);
 
-            // Every NetworkPlayer died with the runner; drop the registry so nobody reads ghosts.
-            NetworkPlayers.Clear();
+            // Every NetworkPlayer died with the runner; drop the cached list so nobody reads ghosts.
+            _players.Clear();
+            _playersFrame = -1;
             _sessions.Clear();
             CurrentCode = "";
             SetState(SessionState.Offline);
@@ -426,7 +435,7 @@ namespace VRZ.Network
             // NetworkManager, which becomes the singleton and re-enters the session lobby.
             Destroy(gameObject);
 
-            // D2: a voluntary shutdown caused by a room-code collision. Nobody else reloads the
+            // A voluntary shutdown caused by a room-code collision. Nobody else reloads the
             // lobby in that case (GameOverController is not running); do it so the fresh manager
             // can retry the create.
             if (shutdownReason == ShutdownReason.Ok && RetryCreateAfterReload)
@@ -497,7 +506,7 @@ namespace VRZ.Network
             }
             OnSessionsChanged?.Invoke();
 
-            // D2 retry: first list after a collision reload -> create with a fresh code.
+            // Collision retry: first list after a collision reload -> create with a fresh code.
             if (_createWhenListArrives && State == SessionState.BrowsingLobby)
             {
                 _createWhenListArrives = false;
@@ -527,7 +536,7 @@ namespace VRZ.Network
             onSceneLoadDone?.Invoke(runner);
 
             // Once the match starts nobody else may enter: the room stays alive while a player is
-            // in it, and with the session menu (B2) a room with a free seat is listed to everyone.
+            // in it, and with the session menu a room with a free seat is listed to everyone.
             // Only the master client may change session settings in Shared Mode.
             bool inArena = SceneManager.GetActiveScene().buildIndex != 0;
             if (inArena && runner.IsSharedModeMasterClient && runner.SessionInfo != null && runner.SessionInfo.IsValid)

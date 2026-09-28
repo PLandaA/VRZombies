@@ -1,7 +1,6 @@
 using Fusion;
 using UnityEngine;
 using VRZ.Core;
-using VRZ.Network;
 
 namespace VRZ.Player
 {
@@ -39,12 +38,17 @@ namespace VRZ.Player
 
         public override void Spawned()
         {
-            // Register under the ACTUAL owner of this player object. Runner.LocalPlayer here was a
-            // critical bug: every remote player's object registered under the LOCAL ref, corrupting
-            // the registry on every client (GetPlayer(remoteRef) == null forever).
-            var owner = Object.StateAuthority != PlayerRef.None ? Object.StateAuthority
-                      : (Object.InputAuthority != PlayerRef.None ? Object.InputAuthority : Runner.LocalPlayer);
-            NetworkManager.instance.AddPlayer(owner, this);
+            // Player registry: Fusion's own PlayerRef -> NetworkObject association. In Shared Mode each
+            // player may only set its OWN association and must hold State Authority over the object
+            // (the owner of this NetworkPlayer does). The association is networked and replicated,
+            // so every client resolves any player with Runner.TryGetPlayerObject (NetworkManager.GetPlayer).
+            if (Object.HasStateAuthority)
+                Runner.SetPlayerObject(Object.StateAuthority, Object);
+
+            // On EVERY client: keep the player's stats alive across the Lobby -> Arena load. The scene
+            // manager destroys the spawned objects of the scene it unloads; the runner is
+            // DontDestroyOnLoad, so parenting under it carries this object into the next scene.
+            transform.SetParent(Runner.transform);
 
             if (Object.HasStateAuthority)
             {

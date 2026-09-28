@@ -2148,6 +2148,7 @@ GameObject:
   - component: {fileID: 3573354196599582181}
   - component: {fileID: 3268138042479385429}
   - component: {fileID: 8120569447528007329}
+  - component: {fileID: 2841637238243545748}
   m_Layer: 7
   m_Name: NetworkCharacter
   m_TagString: Player
@@ -2275,6 +2276,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b66e05315377c17428166d0ea8d18f40, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LocalAvatarHider
+--- !u!114 &2841637238243545748
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8476218466436088030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5630080ed9a9eca459b8468f76532188, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VRZ.Player.DeadAvatarHider
 --- !u!1 &8699786888210412073
 GameObject:
   m_ObjectHideFlags: 0

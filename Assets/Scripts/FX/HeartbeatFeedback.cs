@@ -38,7 +38,7 @@ namespace VRZ.FX
             if (_player != null) { _player.OnHealthChanged -= OnHealthChanged; _player = null; }
         }
 
-        /// Debt D4: severity is recomputed only when the replicated Health changes (Fusion
+        /// Severity is recomputed only when the replicated Health changes (Fusion
         /// OnChangedRender), not polled 4x/s. Beat timing still runs every frame for precision.
         private void OnHealthChanged(int health, int max)
         {

@@ -6,11 +6,11 @@ using VRZ.Enemies;
 namespace VRZ.FX
 {
 
-    /// Feel-powered zombie juice: scale-punch on hit and a bigger pop on death, triggered by
-    /// polling networked Health/State (same pattern as ZombieHitFlash — every client reacts
-    /// to replicated state, so both players see identical feedback with zero network cost).
-    /// Default MMF_Player stacks are built at runtime; drop hand-authored players into the
-    /// override slots to replace them from the Feel editor without touching code.
+    /// Feel-powered zombie juice: scale-punch on hit and a bigger pop on death. Event-driven:
+    /// NetworkZombie.OnHealthChanged (hit) and OnDiedRender (death) fire on every client from the
+    /// replicated state, so both players see identical feedback with zero network cost and no
+    /// per-frame polling. Default MMF_Player stacks are built at runtime; drop hand-authored
+    /// players into the override slots to replace them from the Feel editor without touching code.
     public class ZombieFeel : MonoBehaviour
     {
         [Header("Feel Overrides (optional, author in the Feel editor)")]
@@ -28,25 +28,52 @@ namespace VRZ.FX
         private NetworkZombie _zombie;
         private MMF_Player _hitPlayer;
         private MMF_Player _deathPlayer;
-        private int _lastHealth = int.MinValue;
         private bool _deathPlayed;
+
+        private MMF_Player HitPlayer => hitPlayerOverride != null ? hitPlayerOverride : _hitPlayer;
+        private MMF_Player DeathPlayer => deathPlayerOverride != null ? deathPlayerOverride : _deathPlayer;
 
         private void Awake()
         {
             _zombie = GetComponent<NetworkZombie>();
         }
 
-        private void OnEnable()  { if (_zombie != null) _zombie.OnLocalReset += ResetForNewLife; }
-        private void OnDisable() { if (_zombie != null) _zombie.OnLocalReset -= ResetForNewLife; }
+        private void OnEnable()
+        {
+            if (_zombie == null) return;
+            _zombie.OnLocalReset += ResetForNewLife;
+            _zombie.OnHealthChanged += OnHealthChanged;
+            _zombie.OnDiedRender += OnDied;
+        }
 
-        /// Pool readiness: a re-spawned zombie must be able to play its death pop again and must
-        /// not "punch" on its first health read.
+        private void OnDisable()
+        {
+            if (_zombie == null) return;
+            _zombie.OnLocalReset -= ResetForNewLife;
+            _zombie.OnHealthChanged -= OnHealthChanged;
+            _zombie.OnDiedRender -= OnDied;
+        }
+
+        /// Pool readiness: a re-spawned zombie must be able to play its death pop again.
         private void ResetForNewLife()
         {
-            _lastHealth = int.MinValue;
             _deathPlayed = false;
-            (hitPlayerOverride != null ? hitPlayerOverride : _hitPlayer)?.StopFeedbacks();
-            (deathPlayerOverride != null ? deathPlayerOverride : _deathPlayer)?.StopFeedbacks();
+            HitPlayer?.StopFeedbacks();
+            DeathPlayer?.StopFeedbacks();
+        }
+
+        /// Hit punch on a health drop, except on the killing blow (the death pop plays instead).
+        private void OnHealthChanged(int previous, int current)
+        {
+            if (current < previous && _zombie.State != NetworkZombie.ZombieState.Dead)
+                HitPlayer?.PlayFeedbacks();
+        }
+
+        private void OnDied(bool headshot)
+        {
+            if (_deathPlayed) return;
+            _deathPlayed = true;
+            DeathPlayer?.PlayFeedbacks();
         }
 
         private void Start()
@@ -76,24 +103,6 @@ namespace VRZ.FX
             player.AddFeedback(scale);
             player.Initialization();
             return player;
-        }
-
-        private void Update()
-        {
-            if (_zombie == null || _zombie.Object == null || !_zombie.Object.IsValid) return;
-
-            int h = _zombie.Health;
-            if (_lastHealth == int.MinValue)
-                _lastHealth = h;
-            else if (h < _lastHealth && _zombie.State != NetworkZombie.ZombieState.Dead)
-                (hitPlayerOverride != null ? hitPlayerOverride : _hitPlayer)?.PlayFeedbacks();
-            _lastHealth = h;
-
-            if (_zombie.State == NetworkZombie.ZombieState.Dead && !_deathPlayed)
-            {
-                _deathPlayed = true;
-                (deathPlayerOverride != null ? deathPlayerOverride : _deathPlayer)?.PlayFeedbacks();
-            }
         }
     }
 }
