@@ -86,8 +86,36 @@ namespace VRZ.Player
 
         private void OnIntermission(int nextWave)
         {
+            if (_dead) return;         // a dead player never respawns in this match: no restock
             _spawnedThisRound = 0;   // new round -> fresh grenade budget
             Restock();
+        }
+
+        private bool _dead;
+
+        /// Death (bug 2026-09-29, "the partner still sees the dead player's grenades"). The belt's
+        /// grenades are network objects of their own, deliberately unparented, so hiding the avatar
+        /// leaves them floating where the player fell. They belong to this client (State Authority),
+        /// so this client despawns every grenade it still owns that was not thrown: placed on the
+        /// belt, or in a hand the spectator just forced open. Armed ones are in flight and explode
+        /// normally. Also stops restocking. Called by DeathSpectator.Begin.
+        public void DespawnStock()
+        {
+            _dead = true;
+            for (int i = _mine.Count - 1; i >= 0; i--)
+            {
+                var grab = _mine[i];
+                _mine.RemoveAt(i);
+                _looseSince.Remove(grab);
+                if (grab == null) continue;
+
+                var nade = grab.GetComponent<VRZ.Weapons.NetworkGrenade>();
+                if (nade == null || !nade.Object || !nade.Object.IsValid || !nade.Object.HasStateAuthority) continue;
+                if (nade.Armed || nade.Exploded) continue;   // thrown: let it explode
+
+                if (grab.placePoint != null) grab.placePoint.Remove(grab);   // release the PlacePoint first
+                _runner.Despawn(nade.Object);
+            }
         }
 
         /// Spawns a fresh grenade on every empty PlacePoint, capped by the per-round budget.

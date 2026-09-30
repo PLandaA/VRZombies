@@ -119,8 +119,9 @@ namespace VRZ.Player
 
             // The belt follows the head: while spectating it would hang right under the camera,
             // grenades included (and the partner would see them float behind them). Leave it where
-            // the player died.
-            if (_belt != null) { _beltWasEnabled = _belt.enabled; _belt.enabled = false; }
+            // the player died, and despawn the grenades it still holds: they are network objects of
+            // their own, so hiding the avatar does not hide them (2026-09-29).
+            if (_belt != null) { _beltWasEnabled = _belt.enabled; _belt.DespawnStock(); _belt.enabled = false; }
 
             _follow.FollowDistance = followDistance;
             _follow.FollowHeight = followHeight;

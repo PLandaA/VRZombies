@@ -183,10 +183,16 @@ namespace VRZ.Weapons
 
         public override void Render()
         {
-            foreach (var change in _changes.DetectChanges(this, out _, out _))
+            foreach (var change in _changes.DetectChanges(this, out var previous, out var current))
             {
-                if (change == nameof(LastShootTick) && !Object.HasStateAuthority)
-                    PlayRemoteShootEffects();
+                if (change == nameof(LastShootTick))
+                {
+#if VRZ_NET_DIAGNOSTICS
+                    var reader = GetPropertyReader<int>(nameof(LastShootTick));
+                    Debug.Log("[NetGun] LastShootTick change " + reader.Read(previous) + " -> " + reader.Read(current) + " | authority=" + Object.HasStateAuthority + " owner=" + Object.StateAuthority + " master=" + Runner.IsSharedModeMasterClient + " frame=" + Time.frameCount);
+#endif
+                    if (!Object.HasStateAuthority) PlayRemoteShootEffects();
+                }
             }
             if (!Object.HasStateAuthority && slideTransform != null)
             {
@@ -329,6 +335,9 @@ namespace VRZ.Weapons
 
         private void OnLocalShoot(AutoGun gun)
         {
+#if VRZ_NET_DIAGNOSTICS
+            Debug.Log("[NetGun] local Shoot | authority=" + Object.HasStateAuthority + " owner=" + Object.StateAuthority + " master=" + Runner.IsSharedModeMasterClient + " tick=" + Runner.Tick + " frame=" + Time.frameCount);
+#endif
             if (!Object.HasStateAuthority) return;
             LastShootTick = Runner.Tick;
         }

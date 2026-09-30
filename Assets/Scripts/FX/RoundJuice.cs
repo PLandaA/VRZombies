@@ -126,8 +126,9 @@ namespace VRZ.FX
             while (true)
             {
                 int alive = 0;
-                foreach (var z in FindObjectsByType<NetworkZombie>(FindObjectsSortMode.None))
-                    if (z.State != NetworkZombie.ZombieState.Dead) alive++;
+                var zombies = NetworkZombie.All;   // per-client registry: no scene scan, no allocation
+                for (int i = 0; i < zombies.Count; i++)
+                    if (zombies[i] != null && zombies[i].State != NetworkZombie.ZombieState.Dead) alive++;
 
                 float target = Mathf.Clamp01((float)alive / Mathf.Max(1, zombiesForFullIntensity));
                 _blend = Mathf.MoveTowards(_blend, target, 0.25f);

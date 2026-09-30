@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using VRZ.Core;
 using Fusion;
@@ -143,15 +142,20 @@ namespace VRZ.Weapons
         /// StateAuthority only: authoritative damage through each victim's own damage RPC.
         private void ApplyDamage()
         {
-            // Every IDamageable inside the blast (zombies, props, whatever comes next), once each,
-            // with distance falloff. Players are handled separately below: their physical bodies
-            // are not part of the networked hierarchy the overlap finds.
-            var damaged = new HashSet<IDamageable>();
-            foreach (var hit in Physics.OverlapSphere(transform.position, explosionRadius))
+            // Every zombie this client knows of (NetworkZombie.All: authority-owned and proxies),
+            // by distance, with falloff. No physics overlap: zombies share the Default layer with
+            // the arena, so an unmasked 6 m OverlapSphere returned every wall and prop around and
+            // climbed each one's hierarchy looking for an IDamageable. The list is at most a
+            // handful of entries and allocates nothing. Players are handled separately below:
+            // their physical bodies are not part of the networked hierarchy anyway.
+            float radiusSq = explosionRadius * explosionRadius;
+            var zombies = VRZ.Enemies.NetworkZombie.All;
+            for (int i = 0; i < zombies.Count; i++)
             {
-                var target = hit.GetComponentInParent<IDamageable>();
-                if (target == null || !target.IsAlive || target is IPlayerState) continue;
-                if (!damaged.Add(target)) continue;
+                var z = zombies[i];
+                if (z == null || !z.IsAlive) continue;          // Unity null check: a destroyed component
+                IDamageable target = z;
+                if ((target.Position - transform.position).sqrMagnitude > radiusSq) continue;
 
                 float dist = Vector3.Distance(target.Position, transform.position);
                 int dmg = GrenadeRules.ZombieDamage(dist, explosionRadius, zombieDamage);   // pure rule, unit-tested

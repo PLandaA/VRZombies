@@ -7262,7 +7262,7 @@ Transform:
   m_GameObject: {fileID: 3637899947126415657}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.15, y: 0.15, z: 0.1}
+  m_LocalPosition: {x: 0.15, y: 0.15, z: 0.15}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8388,6 +8388,10 @@ MonoBehaviour:
   followHeight: 0.7
   smoothing: 3
   partnerHeadHeight: 1.6
+  minDistance: 0.9
+  maxDistance: 4.5
+  facingGrace: 2
+  reanchorCooldown: 1.5
 --- !u!1 &4591847458730018405
 GameObject:
   m_ObjectHideFlags: 0
@@ -12723,7 +12727,7 @@ Transform:
   m_GameObject: {fileID: 6819288334350327974}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.15, y: 0.15, z: 0.1}
+  m_LocalPosition: {x: -0.15, y: 0.15, z: 0.15}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

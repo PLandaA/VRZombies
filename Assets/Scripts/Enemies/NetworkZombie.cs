@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using VRZ.Core;
 using UnityEngine.AI;
@@ -17,6 +18,14 @@ namespace VRZ.Enemies
         /// music pressure) invalidate their caches instead of scanning the scene every tick.
         public static event System.Action<NetworkZombie> OnAnyDied;
 
+        /// Every zombie currently spawned on THIS client (authority-owned and proxies alike),
+        /// registered in Spawned and removed in Despawned. Area effects (the grenade) walk this
+        /// list instead of a physics overlap: zombies share the Default layer with the whole
+        /// arena, so a layer mask cannot single them out, and a 6 m OverlapSphere touched every
+        /// wall and prop nearby. Never more than maxSimultaneousZombies + corpses entries.
+        public static IReadOnlyList<NetworkZombie> All => _all;
+        private static readonly List<NetworkZombie> _all = new();
+
         // ── IDamageable ──
         // Geometric headshot: distance from the impact point to the head bone. (A trigger sphere
         // was invisible to AutoGun's ray: QueryTriggerInteraction.Ignore.)
@@ -24,13 +33,24 @@ namespace VRZ.Enemies
         public Vector3 Position => transform.position;
         public bool IsCriticalHit(Vector3 hitPoint) =>
             HeadBone != null && Vector3.Distance(hitPoint, HeadBone.position) < 0.3f;
-        public void ApplyDamage(in DamageInfo damage) => RPC_TakeDamage(damage.Amount, damage.Critical);
+        public void ApplyDamage(in DamageInfo damage) =>
+            RPC_TakeDamage(damage.Amount, damage.Critical, HitsFromBehind(damage.SourcePosition));
+
+        /// True when the damage source is behind the zombie (used only to pick the death fall).
+        /// Computed on the sender from the source position, which never travels in the RPC.
+        private bool HitsFromBehind(Vector3 sourcePosition)
+        {
+            Vector3 toSource = sourcePosition - transform.position; toSource.y = 0f;
+            return toSource.sqrMagnitude > 0.0001f && Vector3.Dot(transform.forward, toSource) < 0f;
+        }
 
         public enum ZombieState : byte { Idle = 0, Chasing = 1, Attacking = 2, Dead = 3, Retreating = 4 }
 
         [Header("Stats")]
         [SerializeField] private int maxHealth = 100;
         [SerializeField] private float runSpeed = 3.5f;
+        [Tooltip("Speed with no one to chase (wander, game-over retreat). The pack's walk clip is a 0.27 m/s shuffle; the blend tree plays it at 2.2x, which matches the feet to the ground at this speed.")]
+        [SerializeField] private float shambleSpeed = 0.6f;
         [SerializeField] private float attackRange = 1.6f;
         [SerializeField] private float attackCooldown = 1.5f;
         [SerializeField] private int attackDamage = 10;
@@ -47,6 +67,11 @@ namespace VRZ.Enemies
         [SerializeField] private string speedParam = "Speed";
         [SerializeField] private string attackParam = "Attack";
         [SerializeField] private string dieParam = "Die";
+        [SerializeField] private string dieForwardParam = "DieForward";
+        [SerializeField] private string cycleOffsetParam = "CycleOffset";
+        [SerializeField] private string variantParam = "Variant";
+        [Tooltip("Damping for the Speed blend: AnimSpeed arrives per network tick with agent-velocity noise; without it the walk/run blend jitters.")]
+        [SerializeField] private float speedDamp = 0.1f;
 
         [Networked, OnChangedRender(nameof(OnHealthChangedRender))]
         public int Health { get; private set; }
@@ -65,6 +90,8 @@ namespace VRZ.Enemies
         }
         [Networked] public ZombieState State { get; private set; }
         [Networked] public NetworkBool DiedByHeadshot { get; private set; }
+        /// Which way the corpse falls: shot from behind -> forward (Z_FallingForward), else back.
+        [Networked] public NetworkBool DiedFromBehind { get; private set; }
         [Networked] public float AnimSpeed { get; private set; }
 
         /// Who landed the last damage, written by the State Authority inside
@@ -157,6 +184,10 @@ namespace VRZ.Enemies
                 if (t.name.Contains("HumanHead")) { HeadBone = t; break; }
         }
 
+        /// A runner shutdown can destroy the object without a Despawned (scene unload); keep the
+        /// registry free of dead references either way.
+        private void OnDestroy() { _all.Remove(this); }
+
         /// Pool readiness. Raised from Spawned on every client, AFTER this
         /// component has cleared its own per-life state, so sibling presentation scripts
         /// (ZombieHitFlash, ZombieFeel, ...) can clear theirs too. Without this, an
@@ -166,6 +197,7 @@ namespace VRZ.Enemies
 
         public override void Spawned()
         {
+            if (!_all.Contains(this)) _all.Add(this);   // pooled instances re-enter here each life
             _changes = GetChangeDetector(ChangeDetector.Source.SimulationState);
             ResetLocalState();
             if (_agent != null)
@@ -217,9 +249,17 @@ namespace VRZ.Enemies
             {
                 // Rebind returns the controller to its entry state and clears pending triggers
                 // (a queued "Die" would otherwise fire on the first frame of the new life).
-                animator.Rebind();
-                animator.Update(0f);
+                animator.Rebind();   // resets parameters too: write ours before the first evaluation
                 animator.SetFloat(speedParam, 0f);
+
+                // Six identical zombies started in phase used to walk like a parade. Each life gets
+                // a random cycle offset (where in the walk/run loop it starts) and one of the two
+                // shuffle variants the pack ships. Local presentation, seeded from the object id so
+                // every client picks the same look for the same zombie.
+                var rng = new System.Random(unchecked((int)Object.Id.Raw * 7919));
+                animator.SetFloat(cycleOffsetParam, (float)rng.NextDouble());
+                animator.SetFloat(variantParam, rng.Next(2));
+                animator.Update(0f);
             }
 
             if (_walkAudio != null && _walkAudio.isPlaying) _walkAudio.Stop();
@@ -228,6 +268,7 @@ namespace VRZ.Enemies
 
         public override void Despawned(NetworkRunner runner, bool hasState)
         {
+            _all.Remove(this);
             // Silence immediately: a pooled instance sits disabled for a while, and a looping
             // AudioSource would keep the "last footstep" state alive.
             if (_walkAudio != null && _walkAudio.isPlaying) _walkAudio.Stop();
@@ -277,13 +318,13 @@ namespace VRZ.Enemies
                 return;
             }
 
-                if (_gameOverSpawner == null) _gameOverSpawner = FindObjectsByType<ZombieSpawner>(FindObjectsSortMode.None) is var sps && sps.Length > 0 ? sps[0] : null;
+                if (_gameOverSpawner == null) _gameOverSpawner = ZombieSpawner.Current;   // self-registered scene object, no scan
                 if (_gameOverSpawner != null && _gameOverSpawner.Object != null && _gameOverSpawner.Object.IsValid && _gameOverSpawner.GameOver)
                 {
                     State = ZombieState.Retreating;   // dedicated walk-away state: Render force-exits any attack anim
                     if (_agent != null && _agent.isActiveAndEnabled && _agent.isOnNavMesh)
                     {
-                        _agent.speed = 1.1f;
+                        _agent.speed = shambleSpeed;
                         Vector3 dir = _targetTransform != null ? (transform.position - _targetTransform.position).normalized : transform.forward;
                         dir.y = 0f;
                         _agent.SetDestination(transform.position + dir * 40f);
@@ -313,7 +354,7 @@ namespace VRZ.Enemies
                     {
                         WanderTimer = TickTimer.CreateFromSeconds(Runner, 4f);
                         Vector2 rnd = Random.insideUnitCircle.normalized * 12f;
-                        _agent.speed = runSpeed * 0.5f;
+                        _agent.speed = shambleSpeed;
                         _agent.SetDestination(transform.position + new Vector3(rnd.x, 0f, rnd.y));
                     }
                     FaceAlongPath();
@@ -398,7 +439,7 @@ namespace VRZ.Enemies
         public override void Render()
         {
             if (animator == null) return;
-            animator.SetFloat(speedParam, AnimSpeed);
+            animator.SetFloat(speedParam, AnimSpeed, speedDamp, Time.deltaTime);   // damped: see speedDamp
             LogInterpolationGap();
             foreach (var change in _changes.DetectChanges(this, out _, out _))
             {
@@ -409,7 +450,7 @@ namespace VRZ.Enemies
                     if (State == ZombieState.Dead)
                     {
                         animator.ResetTrigger(attackParam);   // never queue an attack into the death anim
-                        animator.SetTrigger(dieParam);
+                        animator.SetTrigger(DiedFromBehind ? dieForwardParam : dieParam);   // fall away from the shot
                         OnDiedRender?.Invoke(DiedByHeadshot);
 
                         // The kill is credited HERE, from the master's verdict
@@ -628,7 +669,7 @@ namespace VRZ.Enemies
         }
 
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-        public void RPC_TakeDamage(int amount, NetworkBool headshot = default, RpcInfo info = default)
+        public void RPC_TakeDamage(int amount, NetworkBool headshot = default, NetworkBool fromBehind = default, RpcInfo info = default)
         {
             // Pure, unit-tested rule: a hit on a corpse is not applied (so it can never overwrite the
             // killer), health clamps at zero, and negative amounts never heal.
@@ -643,6 +684,7 @@ namespace VRZ.Enemies
             else
             {
                 DiedByHeadshot = headshot;
+                DiedFromBehind = fromBehind;
                 State = ZombieState.Dead;
                 OnAnyDied?.Invoke(this);
                 AnimSpeed = 0f;

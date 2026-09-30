@@ -88,6 +88,12 @@ namespace VRZ.Network
                 if (runner.IsSharedModeMasterClient)
                 {
                     _loading = true;
+                    // Close the room HERE, before the load, not when the arena has loaded: a seat
+                    // freed during the load (the partner quits) would otherwise be listed and
+                    // taken by a stranger who then lands in a match already under way.
+                    // NetworkManager.OnSceneLoadDone closes it again as a belt-and-braces measure.
+                    if (runner.SessionInfo != null && runner.SessionInfo.IsValid)
+                        runner.SessionInfo.IsOpen = false;
                     runner.LoadScene(SceneRef.FromIndex(gameSceneIndex));
                 }
             }

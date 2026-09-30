@@ -158,10 +158,14 @@ namespace VRZ.Network
         public void UnregisterRig(VRZ.Player.NetworkRig rig) { _rigs.Remove(rig); }
 
         /// Join the session directory so OnSessionListUpdated starts arriving. No room yet.
+        /// The state is Connecting until Photon confirms the directory join: on a headset over
+        /// WiFi that takes seconds, and a Create pressed meanwhile starts the game with a runner
+        /// still joining the directory, fails, and reloads the lobby (the menu enables its
+        /// buttons only in BrowsingLobby, so it shows "Connecting..." and waits instead).
         public async void EnterLobby()
         {
             if (runner == null) return;
-            SetState(SessionState.BrowsingLobby);
+            SetState(SessionState.Connecting);
 
             // We are here because our previous create collided. Create again as soon as the
             // room list arrives (we need it to pick a code that is not taken).
@@ -175,6 +179,17 @@ namespace VRZ.Network
                 LastError = "Lobby unavailable: " + result.ShutdownReason;
                 Debug.LogError("[NetworkManager] JoinSessionLobby failed: " + result.ShutdownReason + " " + result.ErrorMessage);
                 SetState(SessionState.Failed);
+                return;
+            }
+
+            SetState(SessionState.BrowsingLobby);
+
+            // The room list may have arrived while we were still Connecting; the collision retry
+            // in OnSessionListUpdated skipped it, so do it here.
+            if (_createWhenListArrives && _listReceived)
+            {
+                _createWhenListArrives = false;
+                CreateSession();
             }
         }
 
@@ -282,6 +297,7 @@ namespace VRZ.Network
         /// again automatically as soon as it has the room list, without a click.
         public static bool RetryCreateAfterReload { get; private set; }
         private bool _createWhenListArrives;
+        private bool _listReceived;   // at least one OnSessionListUpdated since this manager was born
 
         /// The NetworkPlayer of `player` (the local player when omitted), resolved through Fusion's
         /// replicated player-object association. Null while that player has none yet (for a remote
@@ -505,8 +521,10 @@ namespace VRZ.Network
                 _sessions.Add(s);
             }
             OnSessionsChanged?.Invoke();
+            _listReceived = true;
 
             // Collision retry: first list after a collision reload -> create with a fresh code.
+            // (If this list arrives while EnterLobby is still Connecting, EnterLobby does it.)
             if (_createWhenListArrives && State == SessionState.BrowsingLobby)
             {
                 _createWhenListArrives = false;
@@ -548,6 +566,34 @@ namespace VRZ.Network
             // Scene transitions do NOT re-fire OnPlayerJoined, so nothing re-grounded the rig on
             // arrival. GameMap.SpawnCharacter already moved it to its SpawnPoint; ground it there.
             StartCoroutine(PlaceRigAfterSceneLoad());
+
+            // Late-joiner guard. In Shared Mode the master cannot kick, so the newcomer judges
+            // itself: if the waves are already running when we arrive, this room's match started
+            // without us (a seat freed during the arena load, taken before the room closed).
+            if (inArena && !runner.IsSharedModeMasterClient)
+                StartCoroutine(LeaveIfMatchInProgress());
+        }
+
+        private IEnumerator LeaveIfMatchInProgress()
+        {
+            // Give the spawner's replicated state a moment to arrive; a legitimate partner reads
+            // wave 0 here (the first wave starts 15 s after everybody is ready).
+            yield return new WaitForSeconds(1f);
+            var spawner = VRZ.Enemies.ZombieSpawner.Current;
+            if (spawner == null || spawner.Object == null || !spawner.Object.IsValid) yield break;
+            if (spawner.CurrentWave <= 0) yield break;
+
+            Debug.LogWarning("[NetworkManager] Joined a match already in progress (wave " + spawner.CurrentWave + "): leaving.");
+            LastError = "That match had already started.";
+            var go = VRZ.World.GameOverController.Instance;
+            if (go != null)
+                go.EndMatch("MATCH IN PROGRESS", "That match had already started.\nReturning to the lobby...", 3f);
+            else if (runner != null)
+            {
+                var shutdown = runner.Shutdown();
+                while (!shutdown.IsCompleted) yield return null;
+                SceneManager.LoadScene(0);
+            }
         }
 
         private IEnumerator PlaceRigAfterSceneLoad()
