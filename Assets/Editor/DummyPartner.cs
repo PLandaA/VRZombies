@@ -45,9 +45,17 @@ namespace VRZ.EditorTools
             EditorApplication.EnterPlaymode();
         }
 
+        private static bool InPlay(string action)
+        {
+            if (EditorApplication.isPlaying) return true;
+            Debug.LogWarning("[DummyPartner] " + action + " only works in Play Mode (the match may have ended).");
+            return false;
+        }
+
         [MenuItem(Menu + "Walk (toggle)")]
         private static void Walk()
         {
+            if (!InPlay("Walk")) return;
             var ahp = Object.FindFirstObjectByType<AutoHandPlayer>();
             if (ahp == null || ahp.body == null) { Debug.LogWarning("[DummyPartner] No AutoHandPlayer in play."); return; }
             _walking = !_walking;
@@ -58,6 +66,7 @@ namespace VRZ.EditorTools
         [MenuItem(Menu + "Turn 90")]
         private static void Turn()
         {
+            if (!InPlay("Turn")) return;
             var ahp = Object.FindFirstObjectByType<AutoHandPlayer>();
             if (ahp == null || ahp.headCamera == null) return;
             ahp.headCamera.transform.Rotate(0f, 90f, 0f, Space.World);
@@ -67,6 +76,7 @@ namespace VRZ.EditorTools
         [MenuItem(Menu + "Die (999 damage)")]
         private static void Die()
         {
+            if (!InPlay("Die")) return;
             var me = NetworkSession.Current?.GetPlayer();
             if (me == null || !me.IsValid) { Debug.LogWarning("[DummyPartner] No local player."); return; }
             me.ApplyDamage(new DamageInfo(999, me.Position, me.Position + Vector3.forward, false));
@@ -152,12 +162,31 @@ namespace VRZ.EditorTools
             int lines = 0;
             foreach (var line in output.Split('\n'))
             {
-                if (line.Contains("[NetGun]") || line.Contains("[DevFlags]") || line.Contains("[NetworkManager]") || line.Contains("[DeathSpectator]") || line.Contains("[PlayerBelt]") || line.Contains("Exception") || line.Contains("Error"))
+                if (line.Contains("[NetGun]") || line.Contains("[DevFlags]") || line.Contains("[NetworkManager]") || line.Contains("[DeathSpectator]") || line.Contains("[PlayerBelt]") || line.Contains("[FPS]") || line.Contains("Exception") || line.Contains("Error"))
                 { keep.AppendLine(line.TrimEnd()); lines++; }
             }
             string file = Path.Combine(Application.dataPath, "../Library/quest-logcat.txt");
             File.WriteAllText(file, output);
             Debug.Log("[DummyPartner] Quest log: " + lines + " relevant line(s) (full dump in Library/quest-logcat.txt)\n" + keep);
+        }
+
+        [MenuItem(Menu + "Quest FPS (VrApi)")]
+        private static void QuestFps()
+        {
+            // The Quest runtime logs one "FPS=rendered/target" line per second under the VrApi tag.
+            string adb = FindAdb();
+            if (adb == null) { Debug.LogError("[DummyPartner] adb not found."); return; }
+            string output = Run(adb, "logcat -d -s VrApi");
+            if (output == null) return;
+            var rx = new System.Text.RegularExpressions.Regex(@"FPS=(\d+)/(\d+)");
+            int samples = 0, min = int.MaxValue, target = 0; long sum = 0; int dropped = 0;
+            foreach (System.Text.RegularExpressions.Match m in rx.Matches(output))
+            {
+                int fps = int.Parse(m.Groups[1].Value); target = int.Parse(m.Groups[2].Value);
+                samples++; sum += fps; if (fps < min) min = fps; if (fps < target - 1) dropped++;
+            }
+            if (samples == 0) { Debug.LogWarning("[DummyPartner] No VrApi FPS lines in the log (is the app running on the headset?)."); return; }
+            Debug.Log("[DummyPartner] Quest FPS over " + samples + " s: min=" + min + " avg=" + (sum / (float)samples).ToString("F1") + " target=" + target + " | seconds below target: " + dropped + " (" + (100f * dropped / samples).ToString("F0") + "%)");
         }
 
         [MenuItem(Menu + "Clear Quest log (adb)")]
@@ -182,17 +211,28 @@ namespace VRZ.EditorTools
             return null;
         }
 
-        private static string Run(string exe, string args)
+        /// Runs adb with a hard timeout. adb blocks forever when the headset is asleep or unplugged
+        /// (it waits for a device), and that froze the editor's main thread once (2026-09-30);
+        /// now the process is killed after `timeoutMs` and the caller gets null.
+        private static string Run(string exe, string args, int timeoutMs = 15000)
         {
             try
             {
                 var psi = new ProcessStartInfo(exe, args) { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true };
                 using var p = Process.Start(psi);
-                string output = p.StandardOutput.ReadToEnd();
-                string err = p.StandardError.ReadToEnd();
-                p.WaitForExit(15000);
-                if (!string.IsNullOrEmpty(err) && output.Length == 0) { Debug.LogError("[DummyPartner] adb: " + err.Trim()); return null; }
-                return output;
+                var output = new System.Text.StringBuilder(); var err = new System.Text.StringBuilder();
+                p.OutputDataReceived += (_, e) => { if (e.Data != null) output.AppendLine(e.Data); };
+                p.ErrorDataReceived += (_, e) => { if (e.Data != null) err.AppendLine(e.Data); };
+                p.BeginOutputReadLine(); p.BeginErrorReadLine();
+                if (!p.WaitForExit(timeoutMs))
+                {
+                    try { p.Kill(); } catch { }
+                    Debug.LogError("[DummyPartner] adb did not answer in " + timeoutMs / 1000 + " s (headset asleep or unplugged?). Killed.");
+                    return null;
+                }
+                p.WaitForExit();   // flush the async readers
+                if (err.Length > 0 && output.Length == 0) { Debug.LogError("[DummyPartner] adb: " + err.ToString().Trim()); return null; }
+                return output.ToString();
             }
             catch (System.Exception e) { Debug.LogError("[DummyPartner] adb failed: " + e.Message); return null; }
         }

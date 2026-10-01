@@ -51,12 +51,29 @@ namespace VRZ.FX
                 yield return new WaitForSeconds(0.09f);
                 yield return Flash(0.5f);   // classic double-strike, long enough to catch mid-combat
 
-                if (thunderClip != null && Camera.main != null)
+                if (thunderClip != null)
                 {
                     yield return new WaitForSeconds(Random.Range(thunderDelayRange.x, thunderDelayRange.y));
-                    AudioSource.PlayClipAtPoint(thunderClip, Camera.main.transform.position, thunderVolume);
+                    // 2D, not PlayClipAtPoint: that parked a 3D source where the head WAS, so an
+                    // 8 s rumble panned around as the player turned. Distant thunder has no direction.
+                    ThunderSource().PlayOneShot(thunderClip, thunderVolume);
                 }
             }
+        }
+
+        private AudioSource _thunder;
+
+        /// Lazily created 2D source for the thunder (no mixer in this project: sources play direct).
+        private AudioSource ThunderSource()
+        {
+            if (_thunder == null)
+            {
+                _thunder = gameObject.AddComponent<AudioSource>();
+                _thunder.playOnAwake = false;
+                _thunder.spatialBlend = 0f;
+                _thunder.loop = false;
+            }
+            return _thunder;
         }
 
         private IEnumerator Flash(float duration)

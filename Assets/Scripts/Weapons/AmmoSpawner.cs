@@ -78,10 +78,23 @@ namespace VRZ.Weapons
             }
 
             int toSpawn = Mathf.Max(0, magsPerIntermission - available);
-            for (int i = 0; i < toSpawn; i++)
+            if (toSpawn == 0) return;
+
+            // Spawn only on FREE markers. The old loop always started at marker 0, so a full mag
+            // left there from the last intermission got a new one spawned inside it; the physics
+            // overlap kick sent one flying off the table (2026-10-01, "random ammo on the ground").
+            var mags = FindObjectsByType<AutoAmmo>(FindObjectsSortMode.None);
+            foreach (var p in spawnPoints)
             {
-                var p = spawnPoints[i % spawnPoints.Length];
+                if (toSpawn == 0) break;
+                if (p == null) continue;
+                bool occupied = false;
+                foreach (var m in mags)
+                    if ((m.transform.position - p.position).sqrMagnitude < 0.3f * 0.3f) { occupied = true; break; }
+                if (occupied) continue;
+
                 Runner.Spawn(ammoPrefab, p.position, p.rotation);
+                toSpawn--;
 
                 // The size comes from the PREFAB (its root is already scaled 2.02,
                 // same as the scene magazines and the markers), never from the marker: this only
