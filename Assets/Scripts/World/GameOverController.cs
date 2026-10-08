@@ -63,6 +63,7 @@ namespace VRZ.World
         /// end screen finally shows the co-op result instead of a solo recap.
         private static string BuildTeamRecap()
         {
+            const string SoloBestPrefKey = "VRZ.SoloBestScore";
             var session = NetworkSession.Current;
             if (session == null) return "";
 
@@ -80,6 +81,18 @@ namespace VRZ.World
             }
 
             if (me != null && me.IsValid) Line("YOU", me);
+
+            // Solo Survival: no partner line, no team line; a personal best kept on the headset.
+            var nm = VRZ.Network.NetworkManager.instance;
+            if (nm != null && nm.IsSolo)
+            {
+                int score = me != null && me.IsValid ? me.TotalScore : 0;
+                int best = PlayerPrefs.GetInt(SoloBestPrefKey, 0);
+                if (score > best) { best = score; PlayerPrefs.SetInt(SoloBestPrefKey, best); PlayerPrefs.Save(); sb.Append("NEW PERSONAL BEST!"); }
+                else sb.Append("PERSONAL BEST   SCORE ").Append(best);
+                return sb.ToString().TrimEnd('\n');
+            }
+
             // Snapshot first: never enumerate the live session list while also reading it.
             var players = new System.Collections.Generic.List<IPlayerState>(session.Players);
             int partnerIndex = 0;

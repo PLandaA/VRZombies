@@ -18,8 +18,6 @@ namespace VRZ.Enemies{
         private int requiredReadyPlayers = 2;
 
         /// The gate actually used at runtime: the serialized value, or 1 under VRZ_SOLO_TEST.
-        private int RequiredReady => DevFlags.MinPlayers(requiredReadyPlayers);
-
         [Header("Waves")] [Tooltip("Zombies in wave 1")] [SerializeField]
         private int baseZombiesPerWave = 2;
 
@@ -37,6 +35,17 @@ namespace VRZ.Enemies{
 
         [Tooltip("Seconds between spawns within a wave")] [SerializeField]
         private float spawnInterval = 2f;
+
+        [Header("Solo Survival balance")]
+        [Tooltip("One rifle instead of two: fewer zombies, a smaller cap and a longer run-up before the first wave.")]
+        [SerializeField] private int soloBaseZombiesPerWave = 1;
+        [SerializeField] private int soloZombiesAddedPerWave = 1;
+        [SerializeField] private int soloMaxSimultaneousZombies = 4;
+        [SerializeField] private float soloFirstWaveDelay = 20f;
+
+        /// The gate actually used at runtime: the serialized value, 1 under VRZ_SOLO_TEST, 1 in Solo Survival.
+        private int RequiredReady => IsSolo ? 1 : DevFlags.MinPlayers(requiredReadyPlayers);
+        private bool IsSolo => VRZ.Network.NetworkManager.instance != null && VRZ.Network.NetworkManager.instance.IsSolo;
 
         [Header("Events (corren en todos los clientes)")]
         public UnityEvent<int> OnWaveStarted;
@@ -88,6 +97,15 @@ namespace VRZ.Enemies{
 
         public override void Spawned(){
             Current = this;
+
+            // Solo Survival: swap in the one-rifle balance before anything reads the wave fields.
+            if (IsSolo)
+            {
+                baseZombiesPerWave = soloBaseZombiesPerWave;
+                zombiesAddedPerWave = soloZombiesAddedPerWave;
+                maxSimultaneousZombies = soloMaxSimultaneousZombies;
+                firstWaveDelay = soloFirstWaveDelay;
+            }
 
             // Object pool. Runs on EVERY client (the partner recycles the proxies Fusion
             // creates for it). Prewarm = worst case alive + corpses waiting to despawn, so during

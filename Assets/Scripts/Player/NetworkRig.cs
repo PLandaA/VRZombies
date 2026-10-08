@@ -40,6 +40,9 @@ namespace VRZ.Player
 
         [Tooltip("Vertical offset from the eyes (camera) down to the model's head bone pivot.")]
         [SerializeField] private float eyeToHeadBoneOffset = 0.16f;
+        // Eyes sit in FRONT of the head bone pivot: that backward shift lives in headTarget.positionOffset
+        // (tracked space, z negative). Ch32 measured: face 12.7 cm ahead of the pivot; -0.12 since 2026-10-07
+        // (was -0.08: looking down still showed the neck).
 
         [Tooltip("Compensates a miscalibrated tracking floor (headset reporting lower than reality). Standing, tune until scale reads ~1.00.")]
         [SerializeField] private float trackingHeightOffset = 0f;

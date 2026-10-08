@@ -207,10 +207,10 @@ namespace VRZ.Enemies
                 _agent.updateRotation = false;     // facing is ours (see FaceTowards): target first, path when detouring
                 _agent.enabled = Object.HasStateAuthority;
                 // A pooled instance may be re-spawned somewhere else: move the agent with it
-                // instead of letting it path from its previous death spot. Only when they really
-                // disagree; a fresh Instantiate already has them together.
-                if (_agent.enabled && _agent.isOnNavMesh && Vector3.Distance(_agent.nextPosition, transform.position) > 0.5f)
-                    _agent.Warp(transform.position);
+                // instead of letting it path from its previous death spot. Unconditional since
+                // 2026-10-06: the old "only if isOnNavMesh" guard left an agent that was NOT on
+                // the mesh (or whose internal location was stale) with no way to recover.
+                if (_agent.enabled) PlaceAgentOnNavMesh("Spawned");
             }
             if (Object.HasStateAuthority)
             {
@@ -241,6 +241,7 @@ namespace VRZ.Enemies
             _gameOverSpawner = null;
             _lastRequestedDest = new Vector3(float.NaN, 0f, 0f);
             _nextRepathAt = 0;
+            _stalledSince = -1;
 
             // Render disables every collider on death so bullets pass through corpses (12b).
             foreach (var c in GetComponentsInChildren<Collider>(true)) c.enabled = true;
@@ -424,6 +425,20 @@ namespace VRZ.Enemies
                     _agent.speed = StaggerTimer.ExpiredOrNotRunning(Runner) ? runSpeed : runSpeed * 0.3f;
                     RequestPathTo(targetPos);
 
+                    // Watchdog (2026-10-06): chasing with no path and no motion for 2 s is never
+                    // legitimate. Re-register on the mesh and force a fresh request next tick.
+                    if (!_agent.hasPath && _agent.velocity.sqrMagnitude < 0.01f)
+                    {
+                        if (_stalledSince < 0) _stalledSince = Runner.SimulationTime;
+                        else if (Runner.SimulationTime - _stalledSince > 2.0)
+                        {
+                            _stalledSince = -1;
+                            PlaceAgentOnNavMesh("watchdog: 2 s chasing without a path");
+                            _lastRequestedDest = new Vector3(float.NaN, 0f, 0f);
+                        }
+                    }
+                    else _stalledSince = -1;
+
                     // Look at the target while charging; when the path bends around an obstacle
                     // (path direction far from target direction), look where the feet go instead.
                     Vector3 toTarget = targetPos - transform.position; toTarget.y = 0f;
@@ -582,13 +597,16 @@ namespace VRZ.Enemies
         // re-request when the destination moved or a short interval passed, never while pending.
         private Vector3 _lastRequestedDest = new Vector3(float.NaN, 0f, 0f);
         private double _nextRepathAt;
+        private double _stalledSince = -1;                   // watchdog: SimulationTime when the chase stalled
         private const float RepathMoveThreshold = 0.5f;    // metres the target must move to re-path
         private const float RepathInterval = 0.5f;          // seconds; safety refresh even if static
         private UnityEngine.AI.NavMeshPath _path;            // reused: CalculatePath allocates nothing into it
 
         private void RequestPathTo(Vector3 targetPos)
         {
-            if (_agent == null || !_agent.enabled || !_agent.isOnNavMesh) return;
+            if (_agent == null || !_agent.enabled) return;
+            // Off the mesh (never silently: this was the "stands still, just looks at you" bug).
+            if (!_agent.isOnNavMesh && !PlaceAgentOnNavMesh("RequestPathTo")) return;
 
             bool moved = float.IsNaN(_lastRequestedDest.x)
                          || Vector3.Distance(targetPos, _lastRequestedDest) > RepathMoveThreshold;
@@ -616,17 +634,43 @@ namespace VRZ.Enemies
                 if (!found) TryPathTo(targetPos, _path);       // fall back to the partial path
             }
 
-            if (_path.status != UnityEngine.AI.NavMeshPathStatus.PathInvalid)
+            if (_path.status != UnityEngine.AI.NavMeshPathStatus.PathInvalid && !_agent.SetPath(_path))
+            {
+                // Reproduced 2026-10-06 (Solo, editor): a COMPLETE path computed from the agent's own
+                // position was refused by SetPath while isOnNavMesh still read true; the agent's
+                // internal mesh location had gone stale. Warping it onto its own position repairs
+                // the location and the very same path is then accepted.
+                PlaceAgentOnNavMesh("SetPath refused");
                 _agent.SetPath(_path);
+            }
 
             _lastRequestedDest = targetPos;
             _nextRepathAt = Runner.SimulationTime + RepathInterval;
+        }
+
+        /// Re-registers the agent on the NavMesh at the body's position (nearest point within 3 m).
+        /// Warp is the only call that resets a stale internal location. False = no mesh nearby,
+        /// which is logged in every build: a silent return here is how zombies used to freeze.
+        private bool PlaceAgentOnNavMesh(string why)
+        {
+            if (!UnityEngine.AI.NavMesh.SamplePosition(transform.position, out var hit, 3f, UnityEngine.AI.NavMesh.AllAreas) || !_agent.Warp(hit.position))
+            {
+                Debug.LogWarning("[Zombie] " + why + ": no NavMesh within 3 m of " + transform.position.ToString("F2"));
+                return false;
+            }
+            return true;
         }
 
         /// Ground-projects 'to' onto the NavMesh and computes a path from the agent. True only
         /// when the path is COMPLETE (the destination really is on our connected mesh).
         private bool TryPathTo(Vector3 to, UnityEngine.AI.NavMeshPath path)
         {
+            // 'to' is usually the player's HEAD (1.7 m up, more on rubble). Project it to the
+            // floor first: measured 2026-10-06, in 17 spots of the arena the walkable floor sits
+            // 0.8-1.1 m above the mesh, so a head sampled with a 2.5 m radius found nothing and
+            // the zombie got no path at all.
+            if (Physics.Raycast(to + Vector3.up * 0.2f, Vector3.down, out var ground, 4f, LayerMask.GetMask("Default"), QueryTriggerInteraction.Ignore))
+                to = ground.point;
             if (!UnityEngine.AI.NavMesh.SamplePosition(to, out var hit, 2.5f, UnityEngine.AI.NavMesh.AllAreas)) return false;
             if (!_agent.CalculatePath(hit.position, path)) return false;
             return path.status == UnityEngine.AI.NavMeshPathStatus.PathComplete;

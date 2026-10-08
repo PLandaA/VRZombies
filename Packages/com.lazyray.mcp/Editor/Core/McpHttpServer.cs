@@ -98,7 +98,7 @@ namespace LazyRay.Core
         private static void TryStartImmediate()
         {
             LazyRaySettings settings = null;
-            try { settings = Resources.Load<LazyRaySettings>("LazyRaySettings"); }
+            try { settings = AssetDatabase.LoadAssetAtPath<LazyRaySettings>("Assets/LazyRayData/LazyRaySettings.asset"); }
             catch { /* asset db not ready — fall through to deferred path */ }
 
             if (settings != null)

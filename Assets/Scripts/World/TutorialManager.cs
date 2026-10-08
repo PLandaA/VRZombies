@@ -38,11 +38,17 @@ namespace VRZ.World
         [SerializeField] private float heightOffset = 0.05f;
         [SerializeField] private float followSpeed = 3.5f;
 
+        [Header("Done sign")]
+        [Tooltip("Body of the final sign in co-op: the lobby waits for the partner's tutorial.")]
+        [SerializeField, TextArea] private string doneTextCoop = "Wait for your partner to finish training";
+        [Tooltip("Body of the final sign in Solo: the lobby starts its countdown on its own (no portal, nothing to do).")]
+        [SerializeField, TextArea] private string doneTextSolo = "Get ready: the match starts in a few seconds";
+
         private Transform _head;
         private int _step = -1;
 
-        [Header("Debug")]
-        [Tooltip("Editor / development builds only: A on the right controller or the A key completes the tutorial instantly.")]
+        [Header("Skip")]
+        [Tooltip("A on the right controller completes the tutorial instantly (every build: returning players skip the training). The A key does the same in the editor.")]
         [SerializeField] private bool allowSkipWithA = true;
         private bool _aWasDown;
 
@@ -51,14 +57,18 @@ namespace VRZ.World
             // Support-hand step: complete it if the front grip is already held (see IsFrontGripHeld).
             if (_step == 3 && IsFrontGripHeld()) { Show(4); return; }
 
-            if (!allowSkipWithA || !Debug.isDebugBuild) return;
+            if (!allowSkipWithA) return;
             if (_step < 0 || _step >= 6) return;                         // already done (or not started)
 
-            // Keyboard A (Input System package; the project runs Input System only, no legacy Input)
-            var kb = UnityEngine.InputSystem.Keyboard.current;
-            if (kb != null && kb.aKey.wasPressedThisFrame) { SkipTutorial(); return; }
+            // Keyboard A, editor only (Input System package; the project runs Input System only, no legacy Input)
+            if (Application.isEditor)
+            {
+                var kb = UnityEngine.InputSystem.Keyboard.current;
+                if (kb != null && kb.aKey.wasPressedThisFrame) { SkipTutorial(); return; }
+            }
 
-            // Controller A (right Touch primary button), rising edge only
+            // Controller A (right Touch primary button), rising edge only. Shipped feature since
+            // 2026-10-07 (was development-builds only): the signs announce it.
             var right = UnityEngine.XR.InputDevices.GetDeviceAtXRNode(UnityEngine.XR.XRNode.RightHand);
             if (!right.isValid) return;
             right.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primaryButton, out bool aDown);
@@ -67,11 +77,11 @@ namespace VRZ.World
             if (pressed) SkipTutorial();
         }
 
-        /// DEBUG: jump straight to the DONE sign and flag TutorialDone, exactly as throwing the grenade would.
+        /// Jump straight to the DONE sign and flag TutorialDone, exactly as throwing the grenade would.
         public void SkipTutorial()
         {
             if (_step >= 6) return;
-            Debug.Log("[Tutorial] DEBUG skip (A button).");
+            Debug.Log("[Tutorial] Skipped with A.");
             Show(6);
             StartCoroutine(MarkTutorialDone());
         }
@@ -230,6 +240,20 @@ namespace VRZ.World
             // The LOAD step (now step 1) reveals the mags -- can't skip ahead loading from another angle
             if (step >= 1)
                 SetAmmoVisible(true);
+
+            // Final sign: what happens next differs per mode (co-op waits for the partner, Solo
+            // counts down by itself), so the body is picked here; the heading on the sign stays.
+            if (step == 6 && steps[6] != null)
+            {
+                var tmp = steps[6].GetComponent<TMPro.TMP_Text>();
+                if (tmp != null)
+                {
+                    bool solo = NetworkSession.Current != null && NetworkSession.Current.IsSolo;
+                    int nl = tmp.text.IndexOf('\n');
+                    string heading = nl >= 0 ? tmp.text.Substring(0, nl) : tmp.text;
+                    tmp.text = heading + "\n" + (solo ? doneTextSolo : doneTextCoop);
+                }
+            }
         }
 
         private void SetAmmoVisible(bool visible)

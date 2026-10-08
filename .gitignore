@@ -81,3 +81,7 @@ Assets/_Recovery.meta
 
 # Local safety copies made during refactors (not part of the project)
 /Backups/
+# embedded MCP bridge + regenerable lock file (lock would list the ignored embedded packages)
+Packages/com.coplaydev.unity-mcp/
+Packages/com.coplaydev.unity-mcp.meta
+Packages/packages-lock.json

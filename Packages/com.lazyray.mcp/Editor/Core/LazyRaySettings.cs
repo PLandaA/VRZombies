@@ -11,7 +11,7 @@ namespace LazyRay.Core
     public class LazyRaySettings : ScriptableObject
     {
         // Settings asset lives in project Assets (packages are read-only at runtime)
-        private const string SETTINGS_PATH = "Assets/LazyRayData/Resources/LazyRaySettings.asset";
+        private const string SETTINGS_PATH = "Assets/LazyRayData/LazyRaySettings.asset";
         private static LazyRaySettings _instance;
 
         public static LazyRaySettings Instance
@@ -20,7 +20,7 @@ namespace LazyRay.Core
             {
                 if (_instance == null)
                 {
-                    _instance = Resources.Load<LazyRaySettings>("LazyRaySettings");
+                    _instance = AssetDatabase.LoadAssetAtPath<LazyRaySettings>("Assets/LazyRayData/LazyRaySettings.asset");
                     if (_instance == null)
                     {
                         _instance = CreateInstance<LazyRaySettings>();

@@ -214,6 +214,77 @@ namespace VRZ.Network
             ConnectGame(name);
         }
 
+        // ── Solo Survival (2026-10-05) ───────────────────────────────────────────────────────
+        // Fusion's Single game mode: the whole netcode runs locally with no cloud, so the mode
+        // works offline and starts instantly. The local client has State Authority over
+        // everything; the only code that must learn about it is the code that asked "am I the
+        // Shared Mode master?" (IsMatchAuthority below) and the two-player presentation.
+
+        /// Who owns a networked object, as a player ref that the registry can resolve. Input
+        /// Authority first (set by Spawn(..., playerRef) for avatars and belt grenades), then State
+        /// Authority (Shared Mode), then the local player when we hold the authority ourselves:
+        /// in Fusion's Single mode (Solo Survival) StateAuthority reads as None for everything.
+        public PlayerRef OwnerOf(NetworkObject no)
+        {
+            if (no == null) return PlayerRef.None;
+            if (no.InputAuthority != PlayerRef.None) return no.InputAuthority;
+            if (no.StateAuthority != PlayerRef.None) return no.StateAuthority;
+            return no.HasStateAuthority && runner != null ? runner.LocalPlayer : PlayerRef.None;
+        }
+
+        /// True while a Solo Survival session is running (Fusion Single mode, no cloud).
+        public bool IsSolo => runner != null && runner.IsRunning && runner.GameMode == GameMode.Single;
+
+        /// Who runs the match: the Shared Mode master client, or the lone player in Solo. Use this
+        /// instead of runner.IsSharedModeMasterClient, which is false in Single mode.
+        public bool IsMatchAuthority => runner != null && (runner.IsSharedModeMasterClient || runner.GameMode == GameMode.Single);
+
+        /// Menu → "Solo Survival". Allowed from the room directory and also when the directory
+        /// could not be reached (no internet): Single mode needs no connection at all.
+        public async void StartSolo()
+        {
+            if (runner == null) return;
+            if (State == SessionState.Connecting || State == SessionState.Connected) return;
+            SetState(SessionState.Connecting);
+            LastError = "";
+            OnConnectionStart.Invoke();
+
+            var args = new StartGameArgs()
+            {
+                GameMode = GameMode.Single,
+                SessionName = "solo",
+                PlayerCount = 1,
+                IsVisible = false,
+                IsOpen = false,
+                Scene = SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex),
+                SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>(),
+                ObjectProvider = ObjectPool
+            };
+
+            StartGameResult result;
+            try { result = await runner.StartGame(args); }
+            catch (Exception e)
+            {
+                LastError = "Could not start solo: " + e.Message;
+                Debug.LogException(e);
+                SetState(SessionState.Failed);
+                return;
+            }
+
+            if (!result.Ok)
+            {
+                LastError = "Could not start solo: " + result.ShutdownReason;
+                Debug.LogError("[NetworkManager] Solo StartGame failed: " + result.ShutdownReason + " " + result.ErrorMessage);
+                SetState(SessionState.Failed);
+                return;
+            }
+
+            CurrentCode = "SOLO";
+            SetState(SessionState.Connected);
+            OnConnectionSuccessfull.Invoke();
+            Debug.Log("[NetworkManager] Solo Survival started (offline, Single mode).");
+        }
+
         /// Menu → tapped a row in the room list.
         public void JoinSession(string sessionName)
         {
@@ -570,7 +641,7 @@ namespace VRZ.Network
             // Late-joiner guard. In Shared Mode the master cannot kick, so the newcomer judges
             // itself: if the waves are already running when we arrive, this room's match started
             // without us (a seat freed during the arena load, taken before the room closed).
-            if (inArena && !runner.IsSharedModeMasterClient)
+            if (inArena && !IsMatchAuthority)
                 StartCoroutine(LeaveIfMatchInProgress());
         }
 

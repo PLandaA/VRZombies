@@ -26,9 +26,10 @@ namespace VRZ.EditorTools
         private const string HostFlag = "VRZ.DummyPartner.Host";
         private const float StandingHeight = 1.6f;
 
-        private static bool _hosting, _created, _configured, _walking;
+        private static bool _hosting, _created, _configured, _walking, _god = true;
         private static float _walkAngle;
         private static Vector3 _walkCenter;
+        private static System.Reflection.MethodInfo _healthSetter;
 
         [InitializeOnLoadMethod]
         private static void Hook()
@@ -73,10 +74,18 @@ namespace VRZ.EditorTools
             Debug.Log("[DummyPartner] Turned 90 degrees: head yaw " + ahp.headCamera.transform.eulerAngles.y.ToString("F0"));
         }
 
+        [MenuItem(Menu + "God mode (toggle, default ON)")]
+        private static void God()
+        {
+            _god = !_god;
+            Debug.Log("[DummyPartner] God mode " + (_god ? "ON" : "OFF"));
+        }
+
         [MenuItem(Menu + "Die (999 damage)")]
         private static void Die()
         {
             if (!InPlay("Die")) return;
+            _god = false;   // otherwise the next frame heals the corpse back
             var me = NetworkSession.Current?.GetPlayer();
             if (me == null || !me.IsValid) { Debug.LogWarning("[DummyPartner] No local player."); return; }
             me.ApplyDamage(new DamageInfo(999, me.Position, me.Position + Vector3.forward, false));
@@ -96,6 +105,7 @@ namespace VRZ.EditorTools
                 _hosting = SessionState.GetBool(HostFlag, false);
                 SessionState.SetBool(HostFlag, false);
                 _created = _configured = _walking = false;
+                _god = true;   // every hosted session starts immortal; Die switches it off
                 if (_hosting) Debug.Log("[DummyPartner] Hosting: waiting for the lobby directory...");
             }
             else if (change == PlayModeStateChange.ExitingPlayMode)
@@ -146,6 +156,20 @@ namespace VRZ.EditorTools
                 _walkAngle += Time.deltaTime * 0.5f;   // one lap every ~12 s
                 var pos = _walkCenter + new Vector3(Mathf.Cos(_walkAngle), 0f, Mathf.Sin(_walkAngle)) * 2f;
                 ahp.body.position = pos;
+            }
+
+            // God mode: the dummy cannot defend itself, and the zombies killing it ends the match
+            // (both players dead = game over) before the headset test is over. The editor is the
+            // State Authority of its own player, so it may write Health; the setter is private
+            // (Fusion-weaved), hence reflection. Editor-only tooling.
+            if (_hosting && _god)
+            {
+                var me = NetworkSession.Current?.GetPlayer() as VRZ.Player.NetworkPlayer;
+                if (me != null && me.IsValid && me.Health < me.MaxHealth)
+                {
+                    _healthSetter ??= typeof(VRZ.Player.NetworkPlayer).GetProperty("Health").GetSetMethod(true);
+                    _healthSetter.Invoke(me, new object[] { me.MaxHealth });
+                }
             }
         }
 

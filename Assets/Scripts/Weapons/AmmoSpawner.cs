@@ -15,8 +15,23 @@ namespace VRZ.Weapons
         [Tooltip("Spawn points for fresh magazines")]
         [SerializeField] private Transform[] spawnPoints;
 
-        [Tooltip("Magazines spawned per intermission")]
-        [SerializeField] private int magsPerIntermission = 2;
+        [Tooltip("A magazine sitting on its marker with this fraction of its ammo or less counts as spent: it is removed and a fresh one takes its place at the next intermission")]
+        [SerializeField, Range(0f, 0.9f)] private float spentFraction = 0.25f;
+
+        // A magazine within this distance of a marker "belongs" to that marker.
+        private const float MarkerRadius = 0.3f;
+
+        // AutoAmmo has no capacity field: a fresh magazine's capacity is the prefab's starting currentAmmo.
+        private int _fullAmmo = -1;
+        private int FullAmmo()
+        {
+            if (_fullAmmo < 0)
+            {
+                var a = ammoPrefab != null ? ammoPrefab.GetComponent<AutoAmmo>() : null;
+                _fullAmmo = a != null ? Mathf.Max(1, a.currentAmmo) : 1;
+            }
+            return _fullAmmo;
+        }
 
         private ZombieSpawner _waveSystem;
 
@@ -58,6 +73,11 @@ namespace VRZ.Weapons
             }
         }
 
+        /// One magazine per marker, always (2026-10-07). Each marker is judged on its own: empty
+        /// marker (someone took the mag) or a mag on it that is spent (<= spentFraction of its
+        /// ammo) -> a fresh one appears there. A marker holding a mag with ammo to spare is left
+        /// alone. The old rule was a GLOBAL count (2 full loose mags anywhere in the map), filled
+        /// always from marker 1 first, so marker 2 only ever got a mag when the whole map had none.
         private void SpawnFreshMags()
         {
             if (ammoPrefab == null || spawnPoints == null || spawnPoints.Length == 0)
@@ -66,35 +86,32 @@ namespace VRZ.Weapons
                 return;
             }
 
-            int available = 0;
-            foreach (var ammo in FindObjectsByType<AutoAmmo>(FindObjectsSortMode.None))
-            {
-                if (ammo.currentAmmo <= 0) continue;
-                if (ammo.transform.parent != null) continue;
-                var grab = ammo.GetComponent<Grabbable>();
-                if (grab != null && grab.IsHeld()) continue;
-                if (ammo.GetComponent<NetworkObject>() == null) continue;
-                available++;
-            }
-
-            int toSpawn = Mathf.Max(0, magsPerIntermission - available);
-            if (toSpawn == 0) return;
-
-            // Spawn only on FREE markers. The old loop always started at marker 0, so a full mag
-            // left there from the last intermission got a new one spawned inside it; the physics
-            // overlap kick sent one flying off the table (2026-10-01, "random ammo on the ground").
             var mags = FindObjectsByType<AutoAmmo>(FindObjectsSortMode.None);
             foreach (var p in spawnPoints)
             {
-                if (toSpawn == 0) break;
                 if (p == null) continue;
-                bool occupied = false;
+
+                // The mag sitting on this marker, if any (ignore held ones and ones inside a weapon).
+                AutoAmmo onMarker = null;
                 foreach (var m in mags)
-                    if ((m.transform.position - p.position).sqrMagnitude < 0.3f * 0.3f) { occupied = true; break; }
-                if (occupied) continue;
+                {
+                    if (m == null || m.transform.parent != null) continue;
+                    var grab = m.GetComponent<Grabbable>();
+                    if (grab != null && grab.IsHeld()) continue;
+                    if ((m.transform.position - p.position).sqrMagnitude < MarkerRadius * MarkerRadius) { onMarker = m; break; }
+                }
+
+                if (onMarker != null)
+                {
+                    if (onMarker.currentAmmo > FullAmmo() * spentFraction) continue;   // still useful: keep it
+
+                    // Spent: remove it first, otherwise the new one spawns inside it and the physics
+                    // overlap kick sends one flying off the table (seen 2026-10-01).
+                    var no = onMarker.GetComponent<NetworkObject>();
+                    if (no != null && no.IsValid) Runner.Despawn(no);
+                }
 
                 Runner.Spawn(ammoPrefab, p.position, p.rotation);
-                toSpawn--;
 
                 // The size comes from the PREFAB (its root is already scaled 2.02,
                 // same as the scene magazines and the markers), never from the marker: this only

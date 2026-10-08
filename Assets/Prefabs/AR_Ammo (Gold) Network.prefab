@@ -216,8 +216,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5417052206122726637}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.1667772, y: -0.022295937, z: 0.02678933, w: 0.98537844}
-  m_LocalPosition: {x: 1.484, y: 1.1327, z: -8.0402}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 2.0153997, y: 2.0154, z: 2.0154002}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -446,6 +446,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkAutoAmmo
   _NetworkedAmmo: 0
+  emptyLingerSeconds: 3
 --- !u!114 &6709795942867822601
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -41,8 +41,8 @@ namespace VRZ.Network
             int playerCount = 0;
             foreach (var p in runner.ActivePlayers) playerCount++;
 
-            // Production gate from the scene, or 1 under VRZ_SOLO_TEST (Core/DevFlags.cs).
-            int required = DevFlags.MinPlayers(requiredPlayers);
+            // Production gate from the scene, 1 under VRZ_SOLO_TEST (Core/DevFlags.cs), 1 in Solo Survival.
+            int required = nm.IsSolo ? 1 : DevFlags.MinPlayers(requiredPlayers);
             if (playerCount < required)
             {
                 CancelCountdown();
@@ -50,7 +50,8 @@ namespace VRZ.Network
                 return;
             }
 
-            // Gate: every connected player must have finished the lobby tutorial
+            // Gate: every connected player must have finished the lobby tutorial (Solo included:
+            // the tutorial is the only teaching the game has).
             int tutorialDone = 0;
             foreach (var p in runner.ActivePlayers)
             {
@@ -61,7 +62,7 @@ namespace VRZ.Network
             if (tutorialDone < playerCount)
             {
                 CancelCountdown();
-                SetText("COMPLETE THE TUTORIAL!\n(" + tutorialDone + "/" + playerCount + " ready)");
+                SetText(nm.IsSolo ? "COMPLETE THE TUTORIAL!" : "COMPLETE THE TUTORIAL!\n(" + tutorialDone + "/" + playerCount + " ready)");
                 return;
             }
 
@@ -85,14 +86,14 @@ namespace VRZ.Network
             else if (!_loading)
             {
             SetText("LOADING GAME...");
-                if (runner.IsSharedModeMasterClient)
+                if (nm.IsMatchAuthority)
                 {
                     _loading = true;
                     // Close the room HERE, before the load, not when the arena has loaded: a seat
                     // freed during the load (the partner quits) would otherwise be listed and
                     // taken by a stranger who then lands in a match already under way.
                     // NetworkManager.OnSceneLoadDone closes it again as a belt-and-braces measure.
-                    if (runner.SessionInfo != null && runner.SessionInfo.IsValid)
+                    if (!nm.IsSolo && runner.SessionInfo != null && runner.SessionInfo.IsValid)
                         runner.SessionInfo.IsOpen = false;
                     runner.LoadScene(SceneRef.FromIndex(gameSceneIndex));
                 }

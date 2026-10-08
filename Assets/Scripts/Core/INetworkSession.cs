@@ -34,6 +34,8 @@ namespace VRZ.Core
     public interface INetworkSession
     {
         bool IsRunning { get; }
+        /// TRUE in Solo Survival (single-player session): there is no partner to wait for.
+        bool IsSolo { get; }
         PlayerRef LocalPlayer { get; }
         IReadOnlyCollection<IPlayerState> Players { get; }
 
@@ -62,6 +64,7 @@ namespace VRZ.Core
         private static readonly IPlayerState[] Nobody = System.Array.Empty<IPlayerState>();
 
         public bool IsRunning => false;
+        public bool IsSolo => false;
         public PlayerRef LocalPlayer => PlayerRef.None;
         public IReadOnlyCollection<IPlayerState> Players => Nobody;
         public IPlayerState GetPlayer() => null;

@@ -2188,7 +2188,7 @@ MonoBehaviour:
   character: {fileID: 5311823919771128687}
   headTarget:
     targetTransform: {fileID: 3446857833706244891}
-    positionOffset: {x: 0, y: 0, z: -0.08}
+    positionOffset: {x: 0, y: 0, z: -0.12}
     rotationOffset: {x: 0, y: 0, z: 0}
   handRightTarget:
     targetTransform: {fileID: 1450703188977598864}
@@ -2202,6 +2202,7 @@ MonoBehaviour:
   headBodyPositionOffset: {x: 0, y: -1.5480105, z: 0}
   bodyRotateSmoothness: 0.1
   eyeToHeadBoneOffset: 0.16
+  eyeForwardOffset: 0.08
   trackingHeightOffset: 0
   gameSceneScaleBoost: 1
   bodySpineOffset: 0.14

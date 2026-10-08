@@ -29,6 +29,8 @@ namespace VRZ.World
         [Header("Main page")]
         [SerializeField] private Button createButton;
         [SerializeField] private Button joinButton;
+        [Tooltip("Solo Survival: Fusion Single mode, no cloud. Works with no internet.")]
+        [SerializeField] private Button soloButton;
         [SerializeField] private TMP_Text statusText;
 
         [Header("List page")]
@@ -87,6 +89,7 @@ namespace VRZ.World
         {
             if (createButton) createButton.onClick.AddListener(OnCreateClicked);
             if (joinButton) joinButton.onClick.AddListener(OnJoinClicked);
+            if (soloButton) soloButton.onClick.AddListener(OnSoloClicked);
             if (backButton) backButton.onClick.AddListener(OnBackClicked);
             TryBind();
             Refresh();
@@ -96,6 +99,7 @@ namespace VRZ.World
         {
             if (createButton) createButton.onClick.RemoveListener(OnCreateClicked);
             if (joinButton) joinButton.onClick.RemoveListener(OnJoinClicked);
+            if (soloButton) soloButton.onClick.RemoveListener(OnSoloClicked);
             if (backButton) backButton.onClick.RemoveListener(OnBackClicked);
             Unbind();
         }
@@ -131,6 +135,13 @@ namespace VRZ.World
         {
             if (_nm == null) return;
             _nm.CreateSession();
+            Refresh();
+        }
+
+        private void OnSoloClicked()
+        {
+            if (_nm == null) return;
+            _nm.StartSolo();
             Refresh();
         }
 
@@ -177,6 +188,8 @@ namespace VRZ.World
             if (listPage) listPage.SetActive(_showingList);
             if (createButton) createButton.interactable = browsing;
             if (joinButton) joinButton.interactable = browsing;
+            // Solo needs no directory: also offered when the directory could not be reached (offline).
+            if (soloButton) soloButton.interactable = browsing || state == NetworkManager.SessionState.Failed;
 
             if (statusText)
             {

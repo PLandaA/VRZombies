@@ -42,8 +42,11 @@ namespace VRZ.Player
             // player may only set its OWN association and must hold State Authority over the object
             // (the owner of this NetworkPlayer does). The association is networked and replicated,
             // so every client resolves any player with Runner.TryGetPlayerObject (NetworkManager.GetPlayer).
+            // Registered under Runner.LocalPlayer, not Object.StateAuthority: in Fusion's Single mode
+            // (Solo Survival) StateAuthority reads as None even though we hold it, and the registry
+            // then found nobody. In Shared Mode holding the authority means the two are the same ref.
             if (Object.HasStateAuthority)
-                Runner.SetPlayerObject(Object.StateAuthority, Object);
+                Runner.SetPlayerObject(Runner.LocalPlayer, Object);
 
             // On EVERY client: keep the player's stats alive across the Lobby -> Arena load. The scene
             // manager destroys the spawned objects of the scene it unloads; the runner is

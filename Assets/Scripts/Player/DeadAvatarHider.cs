@@ -1,3 +1,4 @@
+using Fusion;
 using UnityEngine;
 using VRZ.Core;
 using VRZ.Network;
@@ -48,7 +49,9 @@ namespace VRZ.Player
         {
             var nm = NetworkManager.instance;
             if (nm == null || _rig == null || _rig.Object == null || !_rig.Object.IsValid) return;
-            var owner = nm.GetPlayer(_rig.Object.StateAuthority);   // the avatar's owner is its State Authority
+            var ownerRef = nm.OwnerOf(_rig.Object);                  // Input first, State second, local in Single mode
+            if (ownerRef == PlayerRef.None) return;
+            var owner = nm.GetPlayer(ownerRef);
             if (owner == null) return;
 
             _owner = owner;
