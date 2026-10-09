@@ -15,7 +15,8 @@ namespace VRZ.Weapons
     [RequireComponent(typeof(NetworkRigidbody3D))]
     public class WeaponHomeReturn : NetworkBehaviour
     {
-        [SerializeField] private float returnAfterSeconds = 5f;
+        [Tooltip("0 = off. Since released rifles float where they are left (WeaponFloatOnRelease, 2026-10-07) nothing gets lost between rocks, so the prefab ships with 0; set it back to ~5 to restore the safety net.")]
+        [SerializeField] private float returnAfterSeconds = 0f;
         [Tooltip("Already this close to home: nothing to do (scene rifles start under the master client's authority)")]
         [SerializeField] private float homeRadius = 0.5f;
 
@@ -43,6 +44,7 @@ namespace VRZ.Weapons
 
         private void Update()
         {
+            if (returnAfterSeconds <= 0f) return;
             if (Object == null || !Object.IsValid || !Object.HasStateAuthority) { _droppedFor = 0f; return; }
             if (IsHeldLocally()) { _droppedFor = 0f; return; }
             if (Vector3.Distance(transform.position, _homePos) < homeRadius) { _droppedFor = 0f; return; }

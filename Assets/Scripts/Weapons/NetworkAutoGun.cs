@@ -16,6 +16,10 @@ namespace VRZ.Weapons
         // No NetworkedAmmo here: it would mirror the magazine's count, which
         // NetworkAutoAmmo already replicates, and nothing ever read it.
         [Networked] private int LastShootTick { get; set; }
+        /// Where the last shot ended (impact point, or muzzle + 30 m on a miss). Written in the
+        /// same frame as LastShootTick, so proxies read both in one change and draw the tracer
+        /// to the real target instead of a 30 m line into the dark (feedback 2026-10-07).
+        [Networked] private Vector3 LastShootPoint { get; set; }
         [Networked] private Vector3 SlideLocalPosition { get; set; }
         [Networked, OnChangedRender(nameof(OnLoadedMagChanged))]
         public NetworkBehaviourId LoadedMagId { get; private set; }
@@ -318,6 +322,7 @@ namespace VRZ.Weapons
             // Tracer: muzzle -> impact point (local shooter's view)
             if (_tracer != null && _gun != null && _gun.shootForward != null)
                 _tracer.Fire(_gun.shootForward.position, hit.point);
+            if (Object.HasStateAuthority) LastShootPoint = hit.point;   // AutoGun: OnShoot first, OnHit right after
 
             // Anything that implements IDamageable can be shot; the target decides what counts
             // as a critical hit (zombie head, barrel valve...) -- the gun never learns its type.
@@ -340,15 +345,21 @@ namespace VRZ.Weapons
 #endif
             if (!Object.HasStateAuthority) return;
             LastShootTick = Runner.Tick;
+            LastShootPoint = _gun.shootForward.position + _gun.shootForward.forward * 30f;   // miss fallback; OnLocalHit overwrites
         }
 
         private void PlayRemoteShootEffects()
         {
             if (_feel != null) _feel.PlayShotVisuals();
 
-            // Remote tracer: straight ray from the muzzle (we don't know the exact hit point)
+            // Remote tracer: muzzle -> the owner's real impact point, drawn longer and a bit
+            // wider than the local one. The local shooter catches a 70 ms flick because it
+            // coincides with their own recoil; a bystander looking elsewhere never saw it.
             if (_tracer != null && _gun != null && _gun.shootForward != null)
-                _tracer.Fire(_gun.shootForward.position, _gun.shootForward.position + _gun.shootForward.forward * 30f);
+            {
+                Vector3 to = LastShootPoint != default ? LastShootPoint : _gun.shootForward.position + _gun.shootForward.forward * 30f;
+                _tracer.Fire(_gun.shootForward.position, to, lifeTimeOverride: 0.18f, widthScale: 1.5f);
+            }
 
             if (_effects == null) return;
             if (_effects.shootSound != null && _effects.shootSound.clip != null)

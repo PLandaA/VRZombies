@@ -364,8 +364,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f858cbfea50929445a8674e596680d60, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkGrenade
-  fuseSeconds: 3
-  armCheckDelay: 0.25
+  fuseSeconds: 1.75
+  armCheckDelay: 0.15
   explosionRadius: 6
   zombieDamage: 150
   playerDamage: 25

@@ -811,6 +811,7 @@ GameObject:
   - component: {fileID: 1482872635173356541}
   - component: {fileID: 4217667902142663533}
   - component: {fileID: 562106198545046503}
+  - component: {fileID: 1275484619361919942}
   m_Layer: 0
   m_Name: Core
   m_TagString: Untagged
@@ -2288,8 +2289,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 688c762f6434fc4429532dde0cd6c071, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VRZ.Weapons.WeaponHomeReturn
-  returnAfterSeconds: 5
+  returnAfterSeconds: 0
   homeRadius: 0.5
+--- !u!114 &1275484619361919942
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4512891631541320272}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1965e3059542ad845bd3d0875d62ef26, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VRZ.Weapons.WeaponFloatOnRelease
+  floatWhenReleased: 1
 --- !u!1 &4512891631570128839
 GameObject:
   m_ObjectHideFlags: 0

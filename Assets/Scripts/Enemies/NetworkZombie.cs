@@ -206,6 +206,13 @@ namespace VRZ.Enemies
                 _agent.acceleration = 16f;
                 _agent.updateRotation = false;     // facing is ours (see FaceTowards): target first, path when detouring
                 _agent.enabled = Object.HasStateAuthority;
+                if (_agent.enabled)
+                {
+                    _defaultStoppingDistance = _agent.stoppingDistance;
+                    // Symmetric priorities (all 50) make Unity's RVO undecidable head-on: two zombies
+                    // meeting in a doorway both yield, or neither. A spread gives every pair a leader.
+                    _agent.avoidancePriority = UnityEngine.Random.Range(30, 71);
+                }
                 // A pooled instance may be re-spawned somewhere else: move the agent with it
                 // instead of letting it path from its previous death spot. Unconditional since
                 // 2026-10-06: the old "only if isOnNavMesh" guard left an agent that was NOT on
@@ -242,6 +249,8 @@ namespace VRZ.Enemies
             _lastRequestedDest = new Vector3(float.NaN, 0f, 0f);
             _nextRepathAt = 0;
             _stalledSince = -1;
+            _slot = -1;
+            _blockedSince = -1;
 
             // Render disables every collider on death so bullets pass through corpses (12b).
             foreach (var c in GetComponentsInChildren<Collider>(true)) c.enabled = true;
@@ -323,12 +332,19 @@ namespace VRZ.Enemies
                 if (_gameOverSpawner != null && _gameOverSpawner.Object != null && _gameOverSpawner.Object.IsValid && _gameOverSpawner.GameOver)
                 {
                     State = ZombieState.Retreating;   // dedicated walk-away state: Render force-exits any attack anim
-                    if (_agent != null && _agent.isActiveAndEnabled && _agent.isOnNavMesh)
+                    // One destination every 4 s (or when the path is gone), projected onto the mesh.
+                    // Measured 2026-10-08: SetDestination on EVERY tick kept pathPending flipping each
+                    // frame, velocity stuttering 0 <-> 0.3 m/s and the walk animation never starting;
+                    // in the headset that reads as the zombie snapping between idle and a half-pose.
+                    if (_agent != null && _agent.isActiveAndEnabled && _agent.isOnNavMesh &&
+                        (WanderTimer.ExpiredOrNotRunning(Runner) || !_agent.hasPath))
                     {
+                        WanderTimer = TickTimer.CreateFromSeconds(Runner, 4f);
                         _agent.speed = shambleSpeed;
-                        Vector3 dir = _targetTransform != null ? (transform.position - _targetTransform.position).normalized : transform.forward;
+                        Vector3 dir = _targetTransform != null ? transform.position - _targetTransform.position : transform.forward;
                         dir.y = 0f;
-                        _agent.SetDestination(transform.position + dir * 40f);
+                        if (dir.sqrMagnitude < 0.01f) dir = transform.forward;
+                        _agent.SetDestination(OnMeshNear(transform.position + dir.normalized * 12f, 6f));
                     }
                     _targetTransform = null;
                     FaceAlongPath();
@@ -356,7 +372,7 @@ namespace VRZ.Enemies
                         WanderTimer = TickTimer.CreateFromSeconds(Runner, 4f);
                         Vector2 rnd = Random.insideUnitCircle.normalized * 12f;
                         _agent.speed = shambleSpeed;
-                        _agent.SetDestination(transform.position + new Vector3(rnd.x, 0f, rnd.y));
+                        _agent.SetDestination(OnMeshNear(transform.position + new Vector3(rnd.x, 0f, rnd.y), 6f));
                     }
                     FaceAlongPath();
                     UpdateAnimSpeed();
@@ -423,7 +439,40 @@ namespace VRZ.Enemies
                     // Stagger: a fresh bullet briefly cuts the charge to a stumble, so shots
                     // read as physical impacts instead of just a colour flash
                     _agent.speed = StaggerTimer.ExpiredOrNotRunning(Runner) ? runSpeed : runSpeed * 0.3f;
-                    RequestPathTo(targetPos);
+
+                    // Approach slots (2026-10-08): inside 3x attackRange every zombie aims at its own
+                    // post on a ring around the target instead of the target itself, so a pack fans
+                    // out and all of them get within bite range. Before that, with one shared
+                    // destination, the first arrival parked at stoppingDistance and the ones behind
+                    // shoved it from 2.3 m, out of range, forever.
+                    bool near = distSqXZ <= (attackRange * 3f) * (attackRange * 3f);
+                    Vector3 dest = targetPos;
+                    if (near)
+                    {
+                        if (_slot < 0) _slot = FreeSlot(-1);
+                        Vector3 away = transform.position - targetPos; away.y = 0f;
+                        if (away.sqrMagnitude < 0.01f) away = -transform.forward;
+                        Vector3 dir = Quaternion.Euler(0f, SlotOffsets[_slot], 0f) * away.normalized;
+                        dest = targetPos + dir * (attackRange * 0.85f);
+                        _agent.stoppingDistance = 0.25f;   // the post IS the standoff distance
+                    }
+                    else _agent.stoppingDistance = _defaultStoppingDistance;
+                    RequestPathTo(dest);
+
+                    // Blocked by a packmate: has a path, barely moving, inside the ring zone. Take
+                    // the next free post instead of pushing. 0.7 s so a normal slow-down on arrival
+                    // does not count.
+                    if (near && _agent.hasPath && _agent.velocity.sqrMagnitude < 0.12f && _agent.remainingDistance > 0.6f)
+                    {
+                        if (_blockedSince < 0) _blockedSince = Runner.SimulationTime;
+                        else if (Runner.SimulationTime - _blockedSince > 0.7)
+                        {
+                            _blockedSince = -1;
+                            _slot = FreeSlot(_slot);
+                            _lastRequestedDest = new Vector3(float.NaN, 0f, 0f);
+                        }
+                    }
+                    else _blockedSince = -1;
 
                     // Watchdog (2026-10-06): chasing with no path and no motion for 2 s is never
                     // legitimate. Re-register on the mesh and force a fresh request next tick.
@@ -584,6 +633,7 @@ namespace VRZ.Enemies
                 if (currentDist - bestDist < switchMargin) return;   // not worth switching
             }
 
+            if (best != _targetTransform) _slot = -1;   // posts belong to a target; take a new one over there
             _targetTransform = best;
         }
 
@@ -598,6 +648,34 @@ namespace VRZ.Enemies
         private Vector3 _lastRequestedDest = new Vector3(float.NaN, 0f, 0f);
         private double _nextRepathAt;
         private double _stalledSince = -1;                   // watchdog: SimulationTime when the chase stalled
+
+        // Approach slots: angular offsets (degrees) from the zombie's own approach direction, in the
+        // order they are handed out. First arrival comes straight in, the next two flank at 50°, etc.
+        // 50° on a 1.36 m ring is a 1.15 m chord: two agent radii plus a hand of air.
+        private static readonly float[] SlotOffsets = { 0f, 50f, -50f, 100f, -100f, 150f, -150f, 180f };
+        private int _slot = -1;
+        private double _blockedSince = -1;
+        private float _defaultStoppingDistance = 1.3f;
+
+        /// Lowest post index not held by another live zombie chasing the same target; 'current' is
+        /// skipped so a blocked zombie actually moves. Falls back to the next index when all are taken.
+        private int FreeSlot(int current)
+        {
+            for (int i = 0; i < SlotOffsets.Length; i++)
+            {
+                if (i == current) continue;
+                bool taken = false;
+                foreach (var other in All)
+                {
+                    if (other == this || other == null || other.IsDead || other._slot != i) continue;
+                    if (other._targetTransform != _targetTransform) continue;
+                    if (other.State != ZombieState.Chasing && other.State != ZombieState.Attacking) continue;
+                    taken = true; break;
+                }
+                if (!taken) return i;
+            }
+            return (current + 1) % SlotOffsets.Length;
+        }
         private const float RepathMoveThreshold = 0.5f;    // metres the target must move to re-path
         private const float RepathInterval = 0.5f;          // seconds; safety refresh even if static
         private UnityEngine.AI.NavMeshPath _path;            // reused: CalculatePath allocates nothing into it
@@ -646,6 +724,16 @@ namespace VRZ.Enemies
 
             _lastRequestedDest = targetPos;
             _nextRepathAt = Runner.SimulationTime + RepathInterval;
+        }
+
+        /// Nearest NavMesh point to 'want' within 'radius'; falls back to a short hop in the same
+        /// direction so SetDestination never gets an off-mesh point (which fails and retries every tick).
+        private Vector3 OnMeshNear(Vector3 want, float radius)
+        {
+            if (UnityEngine.AI.NavMesh.SamplePosition(want, out var hit, radius, UnityEngine.AI.NavMesh.AllAreas)) return hit.position;
+            Vector3 dir = want - transform.position; dir.y = 0f;
+            Vector3 shortHop = transform.position + dir.normalized * 3f;
+            return UnityEngine.AI.NavMesh.SamplePosition(shortHop, out hit, 3f, UnityEngine.AI.NavMesh.AllAreas) ? hit.position : transform.position;
         }
 
         /// Re-registers the agent on the NavMesh at the body's position (nearest point within 3 m).
