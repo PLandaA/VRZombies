@@ -1196,7 +1196,7 @@ Animator:
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 8f7380da49034cd488ddff94b1ac35d1, type: 3}
   m_Controller: {fileID: 9100000, guid: 9529b31b3126d544ba744e38a1237952, type: 2}
-  m_CullingMode: 1
+  m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
@@ -1340,12 +1340,15 @@ MonoBehaviour:
   speedParam: Speed
   attackParam: Attack
   dieParam: Die
+  dieForwardParam: DieForward
   cycleOffsetParam: CycleOffset
   variantParam: Variant
   speedDamp: 0.1
   _Health: 0
   _State: 0
   _DiedByHeadshot:
+    _value: 0
+  _DiedFromBehind:
     _value: 0
   _AnimSpeed: 0
   deathSounds:
