@@ -1,7 +1,7 @@
 # VR Multiplayer Zombie Survival
 ### Photon Fusion 2 (Shared Mode) + AutoHand VR + Final IK (VRIK)
 
-A cooperative VR zombie survival game for 2 players, built in Unity 6 (URP) with full physics-based hand interactions and a full-body networked avatar. This repository showcases the **networking and gameplay systems I built from scratch**: the integration between Photon Fusion 2 Shared Mode, the AutoHand VR interaction framework and Final IK.
+A cooperative VR zombie survival game for 2 players, built in Unity 6 (URP) with full physics-based hand interactions and a full-body networked avatar. **Published on the Meta Horizon Store** for Quest 2, 3 and 3S: [VR Survival Zombies](https://www.meta.com/experiences/vr-survival-zombies/1310775452126168/). This repository showcases the **networking and gameplay systems I built from scratch**: the integration between Photon Fusion 2 Shared Mode, the AutoHand VR interaction framework and Final IK.
 
 > Third-party assets (Photon SDK, AutoHand, Final IK and art packs) are **not included** -- see [External Assets](#external-assets-required). Everything under `Assets/Scripts/` is original or rewritten code.
 
@@ -79,7 +79,7 @@ A cooperative VR zombie survival game for 2 players, built in Unity 6 (URP) with
 
 ### Quest-Ready Configuration
 - **Dedicated render path**: a `Quest_RPAsset` URP asset behind a "Quest" quality level that is the Android default -- MSAA 4x (nearly free on tiled GPUs, essential for VR edges), no HDR, no main-light shadows, 3 per-pixel additional lights (two head lamps + a muzzle flash), no depth/opaque texture passes, and its own `Quest_Renderer` with **no post-processing** and without the PC renderer's SSAO. PC keeps its own asset, renderer and post-processing untouched. **Render scale 1.0 plus fixed foveated rendering** (`FoveatedRenderingBootstrap`, OpenXR SRP foveation at level 1.0): measured with OVR Metrics on a Quest 3S in a six-zombie wave, 70-72 fps with the GPU at 80-85% -- the budget arrived at step by step in the Performance Lessons below. The look of the post profile survives at zero cost through `PostLookBaker`, which bakes its Color Adjustments into the scene's sky, fog and lights at load.
-- **Android settings Meta expects**: Vulkan only, IL2CPP/ARM64, minSdk 29 / target SDK 34, ASTC texture subtarget, multithreaded rendering, Internet permission required. OpenXR for Android with Meta Quest Support and the Touch, Touch Pro and Touch Plus controller profiles, Single Pass Instanced, input-polling latency optimization; targets Quest 2, Pro, 3 and 3S.
+- **Android settings Meta expects**: Vulkan only, IL2CPP/ARM64, minSdk 29 / target SDK 34, ASTC texture subtarget, multithreaded rendering, Internet permission required. OpenXR for Android with Meta Quest Support and the Touch, Touch Pro and Touch Plus controller profiles, Single Pass Instanced, input-polling latency optimization; targets Quest 2, 3 and 3S (not the Pro: see Setup step 6).
 - **What the Meta Horizon Store's upload validator rejects that a sideload never notices**: Unity's default *Install Location* (*Prefer External*; the store requires `auto`) and *Default Orientation* on *Auto Rotation* (the store requires landscape, even though a VR app never draws to a phone-shaped screen). Both are now set (*Auto*, *Landscape Left* only). The merged manifest was audited with `aapt dump permissions` against Meta's prohibited and review-requiring lists: `INTERNET` and `ACCESS_NETWORK_STATE` (Photon), the two OpenXR permissions, `VIBRATE` (Feel's haptics package) and AndroidX's own non-exported receiver permission, none of them prohibited or subject to review.
 - **Memory diet**: the 22 long ambience/music clips stream (Vorbis 0.45) instead of sitting decompressed in RAM (~65MB of PCM each); 224 SFX capped at Vorbis 0.6; the 82 textures authored at 4096px carry an Android-only override to 2048 (about 4x less VRAM per texture on the headset).
 - **One zombie, one renderer**: the pack ships the zombie as 14 skinned parts sharing one material, i.e. 14 draw calls, 14 shadow-caster draws and 14 skinning jobs per zombie. `VRZ > Dev > Zombie > Combine skinned meshes` (editor tool) concatenates them into one mesh with a union bone list (the parts share the skeleton and the same bind poses, verified), so a zombie is one draw and one shadow draw; twelve on screen went from 338 to 26 draw calls in the editor bench. The renderer uses fixed bind-pose bounds (no per-frame bounds recompute) and the Animator only writes bones while some renderer is visible (`CullUpdateTransforms`; attack timing is a network timer, not an animation event, so gameplay is unaffected). The FBX's *Optimize Game Objects* is deliberately left off: the prefab is an unpacked copy whose bone transforms the combined renderer references.
@@ -103,6 +103,55 @@ A cooperative VR zombie survival game for 2 players, built in Unity 6 (URP) with
 | Spawning | `PooledObjectProvider` (an `INetworkObjectProvider`) recycles zombies; other prefabs keep Fusion's default instantiate/destroy |
 | Sessions | Photon session lobby per build version, room code = session name, room closed once the arena loads |
 | Player spawn handshake | `NetworkManager` fires `onPlayerSpawn` only once the scene's map has subscribed -- Fusion can deliver `OnPlayerJoined` in the very frame a scene finishes loading |
+
+### Authority map
+
+Shared Mode has no server: every `NetworkObject` has exactly one client as its State Authority, normally whoever spawned it, and proxies render what that client replicates. Who owns what in this game, and the only three paths that cross those boundaries:
+
+```mermaid
+flowchart LR
+    subgraph MC["Master client (first player; Solo = the only player)"]
+        direction TB
+        SCN["Scene objects<br/>ZombieSpawner · AmmoSpawner · AmbiencePlayer<br/>rifles as placed in the scene"]
+        ZOM["Zombies<br/>spawned by ZombieSpawner · pooled"]
+        MAG["Magazines<br/>spawned by AmmoSpawner between waves"]
+    end
+    subgraph EACH["Each client, for itself"]
+        direction TB
+        PLY["NetworkPlayer<br/>score · kills · headshots · health · ready flags"]
+        RIG["NetworkRig<br/>10 NetworkTransforms + 3 tuning values"]
+        GRN["Grenades<br/>spawned by the player's own belt, never transferable"]
+    end
+    HAND["Rifles and magazines in play<br/>AllowStateAuthorityOverride:<br/>authority follows the hand"]
+    EACH -. "RequestStateAuthority()<br/>on highlight, grab, insert" .-> HAND
+    HAND -- "RPC_TakeDamage<br/>any client → zombie's authority" --> ZOM
+    ZOM -- "RPC_TakeDamage<br/>zombie's authority → victim's authority" --> PLY
+    HAND -- "RPC_HitEffect<br/>shooter → everyone else (InvokeLocal = false)" --> EACH
+```
+
+- **Master client** = `Runner.IsSharedModeMasterClient`, or the lone player in Solo (`GameMode.Single`), wrapped as `NetworkManager.IsMatchAuthority`. It runs the wave clock, spawns zombies and magazines, and simulates every zombie's `FixedUpdateNetwork` (NavMesh, attacks, retreat). If it leaves, the match ends by design (see Known Issues).
+- **Each client** owns its player object (spawned for it by `NetworkManager` on join), its rig (spawned by the map) and the grenades its belt spawns. Nothing about a player is ever written by another client: damage arrives as an RPC and the victim's own authority applies it.
+- **Rifles and magazines** are the only objects whose authority moves. `NetworkAutoGun` requests State Authority the moment a hand highlights the weapon, again on grab and when a magazine is inserted (the magazine comes along), and re-requests every 0.5 s while held so a hiccup cannot leave a held rifle in someone else's hands for long. Rifle physics (`NetworkRigidbody3D`) and its shot state therefore always run on the client holding it.
+- **Kill credit** rides on the damage RPC: the zombie's authority stores `RpcInfo.Source` in `[Networked] PlayerRef LastDamager`, so when the death replicates, the killer's own client credits the score it owns.
+
+### Replicated state vs RPCs: the inventory
+
+The rule that decides between the two: **state that must be true for anyone who joins or looks later is `[Networked]`; one-shot events with a payload that only matter in the moment are RPCs**. Everything on the wire, from the code:
+
+| Object (authority) | `[Networked]` state | RPCs | Notes |
+|---|---|---|---|
+| `NetworkZombie` (master) | `Health`, `State`, `AnimSpeed`, `LastDamager`, `DiedByHeadshot`, `DiedFromBehind`, `AttackTick`, timers: attack cooldown, pending hit, stagger, retarget, wander, despawn (`TickTimer`) | `RPC_TakeDamage(amount, headshot, fromBehind)` any client → State Authority | Attacks, deaths and animation blends replicate as state and are detected with a `ChangeDetector`; proxies never raycast or decide anything |
+| `ZombieSpawner` (master, scene) | `CurrentWave`, `IsIntermission`, `GameOver`, `WaitingForPlayers`, `ZombiesLeftToSpawn`, intermission and spawn `TickTimer`s | none | The HUD on every client reads the wave state; only the master advances it |
+| `NetworkPlayer` (its player) | `Health`, `IsDead`, `TotalScore`, `Kills`, `HeadshotKills`, `Ready`, `TutorialDone` | `RPC_TakeDamage(amount, attackerPos)` any client → State Authority | The lobby gates (ready, tutorial) are plain state: a late observer sees the truth |
+| `NetworkRig` (its player) | 10 `NetworkTransform`s (root, body, head, hands, IK targets, visual anchors) + `TunedLive`, `TunedElbowHintOffset`, `TunedArmLengthScale` | none | Pose is pure state; VRIK solves locally on every client from the replicated targets |
+| `NetworkAutoGun` (holder) | `LastShootTick`, `LastShootPoint`, `SlideLocalPosition`, `LoadedMagId`, `Chambered` + `NetworkRigidbody3D` | none (shots are state, see below) | A shot is a change of `LastShootTick`; proxies play muzzle, sound and a tracer to `LastShootPoint` when the change arrives. No RPC per bullet |
+| `NetworkGunHitEffect` (holder) | none | `RPC_HitEffect(point, normal)` shooter → all, `InvokeLocal = false` | The one true "event with payload": an impact decal has no future state, and the shooter already played it locally |
+| `NetworkAutoAmmo` (holder) | `NetworkedAmmo` + `NetworkTransform` | none | Rounds left is state; authority follows the magazine into whoever's rifle |
+| `NetworkGrenade` (thrower) | `Armed`, `Exploded`, `FuseTimer`, `DespawnTimer` + `NetworkTransform` | none | The explosion is a state flip; each client plays the blast when `Exploded` arrives and the thrower's authority applies the damage through the zombies' RPC |
+| `AmbiencePlayer` (master, scene) | `ClipIndex` | none | One random pick per match, replicated so both players hear the same ambience |
+| `AmmoSpawner`, `WeaponHomeReturn`, `LocalAvatarHider` | none | none | Authority-only logic (`Spawn`/`Despawn`, timers) with no replicated fields of their own |
+
+Three RPCs in the whole game, all of them damage or impact events. Everything else -- shots, reloads, waves, deaths, animation, scores, readiness -- is state, which is what makes late observers, pooled respawns and the Solo runner (same code, no cloud) work without special cases.
 
 ## Netcode Audit (September 2026)
 
@@ -184,6 +233,35 @@ Fixes were then prioritised with one rule -- *does it break the two-player exper
 
 **What is deliberately not unit-tested.** Networking (authority transfer, RPCs, replication, reconnection) and the feel of hands and held objects depend on a live Fusion session, AutoHand physics and the headset's frame rate. Those are verified in two-build and headset sessions against a checklist, reading the diagnostics described under Setup.
 
+## Performance on Quest (measured)
+
+All numbers below come from **OVR Metrics Tool** on a **Meta Quest 3S**, in the arena, in a wave with six zombies alive (the heaviest moment the game produces), reading the overlay for a few minutes per build. The target is 72 fps (the display's refresh) with the GPU under ~85%, which leaves room for thermal throttling in long sessions. Compositor log lines (`VrApi` `FPS=72/72`) are not used for this: they report what was displayed, not how much GPU was left, which is how a 30 fps build once looked like a 72 fps one.
+
+| Build (one change per measurement) | FPS | GPU | CPU |
+|---|---|---|---|
+| Render scale 1.4, post-processing, main-light shadows (what the first store review tested) | 30-32 | 95%+ | < 20% |
+| 1. Render scale 1.4 → 1.0 | 50-56 | 95%+ | ≤ 49% |
+| 2. Post-processing off on the Quest renderer | 59-72 | 90-95% | ≤ 45% |
+| 3. Main-light shadows off | 68-73 | 85-95% | 30-35% |
+| 4. Fixed foveated rendering, level 1.0 (`FoveatedRenderingBootstrap`) | **70-72** | **80-85%** | 30-35% |
+
+What the table says: at 1.4 the game rendered 1.96x the panel's pixels, which alone halved the frame rate; the post-processing pass cost about ten frames for a Bloom that never triggered without HDR; the shadow pass redrew 386 renderers for a 0.32-intensity moon; and foveation bought the last margin without touching the centre of the view. Grass was checked and ruled out: `TerrainQualityProfile` already runs Android at 10 m / 0.25 density. Lighting, fog and sky are graded at load by `PostLookBaker` to keep the post profile's look at zero per-frame cost.
+
+Frame budget at 72 fps is 13.9 ms; the remaining known hitch is a single dip to 56 fps in the first round of a session, when the Vulkan driver compiles each effect's pipeline state the first time it is drawn (candidate: Unity 6's graphics-state collection warm-up during the arena load).
+
+**Netcode and gameplay probes (editor, per-frame sampling):**
+
+| Probe | Result |
+|---|---|
+| Gap between a zombie's NavMesh position and its rendered transform in Solo (`GameMode.Single`), 1235 moving frames | 0.0 cm (the authority is not interpolated) |
+| Shared Mode: a held rifle's authority pull-back with `DisableSharedModeInterpolation` off / on | up to ~0.11 m / 0 |
+| Six zombies spawned in a column 9 m away: in bite range after 12 s | 5 of 6, then 6 of 6 (before approach slots: 1-2) |
+| Game-over retreat: frames with a pending path / agent speed | 2% / 0.60 m/s steady (before: ~50% / 0-0.3 m/s stutter) |
+| Zombie foot travel during 4 s of retreat, Animator *Cull Update Transforms* → *Always Animate* | 17.8 cm then frozen → 104 cm |
+| Re-grabbing a rifle after it floated (hand still) | 1.1 cm steady hand-to-grip gap, no shake |
+
+**How to reproduce:** install OVR Metrics Tool on the headset, enable the overlay with frame rate and GPU/CPU utilisation, start Solo, skip the tutorial with A, survive to a wave with six zombies alive and read the overlay for two or three minutes. The editor probes are ad-hoc `EditorApplication.update` samplers run through the MCP bridge during a Solo session; their results are kept in `Assets/LazyRayData/tasks.json` (git-ignored) and summarised here.
+
 ## Project Structure (my code)
 
 ```
@@ -259,7 +337,7 @@ Scenes will show missing references until these are imported.
 3. Create a Fusion App ID at photonengine.com and paste it into `PhotonAppSettings`.
 4. **Fusion project config is not versioned** (`Assets/Photon*` is git-ignored with the SDK). In `NetworkProjectConfig` set: tick rate **32**, `Network > Connection Timeout` **25** s, and keep physics in Shared Mode configuration (`Auto` authority, Unity `FixedUpdate` timing, no `RunnerSimulatePhysics3D` on the runner).
 5. Open `Assets/Scenes/LobbyScene` and press Play (or build two clients). One player chooses **Create Lobby** and reads out the two-digit room code; the other chooses **Join Lobby** and picks that room from the list. Both builds must share the same `Player Settings > Version`, because the room list is namespaced by it.
-6. For Meta Quest, switch the build target to Android. The Android/OpenXR side is versioned and ready: OpenXR loader for Android with **Meta Quest Support** and the Touch / Touch Pro / Touch Plus controller profiles (Quest 2, Pro, 3 and 3S; Quest 1 is not targeted), Single Pass Instanced, latency optimization on input polling; IL2CPP, ARM64, Vulkan only, ASTC, target SDK **34**, Internet permission *Require* (an online-only game must not rely on Unity's auto-detection), *Install Location* **Auto** and *Default Orientation* **Landscape Left** (the Meta Horizon Store's upload validator rejects Unity's defaults for both); the "Quest" quality level as the Android default, backed by `Quest_RPAsset` and its own `Quest_Renderer` (the PC renderer's SSAO is a full-screen pass per eye, so Quest gets a renderer without it); the Roslyn analyzer DLLs in `Assets/Plugins/Roslyn` are editor-only so they never enter the APK. Fusion and Feel add their own scripting defines to Android when the target is switched. Two things are yours to provide: a **custom keystore** (*Publishing Settings*; back it up outside the project, the debug keystore cannot update a published app) and the passwords. **Unity keeps the keystore passwords in memory only**: every script recompilation or domain reload (a code edit, a define change) clears them and the build fails with "Unable to sign the application; please provide passwords!". Do all code and configuration changes first, then enter the passwords, then build. Install with Meta Quest Developer Hub (drag the APK onto *Device Manager*) or `adb install -r`; the app appears under *Unknown Sources*. **OVR Metrics Tool** on the headset, in a six-zombie wave, is the reference for performance (target: 72 fps with GPU under ~85%); compositor log lines are not.
+6. For Meta Quest, switch the build target to Android. The Android/OpenXR side is versioned and ready: OpenXR loader for Android with **Meta Quest Support** and the Touch / Touch Pro / Touch Plus controller profiles (Quest 2, 3 and 3S; Quest 1 is not targeted, and Quest Pro was dropped on purpose: with the foveated-rendering feature enabled, targeting the Pro makes the OpenXR package add an eye-tracking permission and a *required* eye-tracking feature to the manifest, which the game does not use), Single Pass Instanced, latency optimization on input polling; IL2CPP, ARM64, Vulkan only, ASTC, target SDK **34**, Internet permission *Require* (an online-only game must not rely on Unity's auto-detection), *Install Location* **Auto** and *Default Orientation* **Landscape Left** (the Meta Horizon Store's upload validator rejects Unity's defaults for both); the "Quest" quality level as the Android default, backed by `Quest_RPAsset` and its own `Quest_Renderer` (the PC renderer's SSAO is a full-screen pass per eye, so Quest gets a renderer without it); the Roslyn analyzer DLLs in `Assets/Plugins/Roslyn` are editor-only so they never enter the APK. Fusion and Feel add their own scripting defines to Android when the target is switched. Two things are yours to provide: a **custom keystore** (*Publishing Settings*; back it up outside the project, the debug keystore cannot update a published app) and the passwords. **Unity keeps the keystore passwords in memory only**: every script recompilation or domain reload (a code edit, a define change) clears them and the build fails with "Unable to sign the application; please provide passwords!". Do all code and configuration changes first, then enter the passwords, then build. Install with Meta Quest Developer Hub (drag the APK onto *Device Manager*) or `adb install -r`; the app appears under *Unknown Sources*. **OVR Metrics Tool** on the headset, in a six-zombie wave, is the reference for performance (target: 72 fps with GPU under ~85%); compositor log lines are not.
 
 **Testing alone.** Add `VRZ_SOLO_TEST` (lobby and waves start with one player) and/or `VRZ_INVULNERABLE` to *Player Settings > Scripting Define Symbols* (per platform: adding it to Android does not touch Standalone); a warning is logged at startup while they are active. Remove them before a real build, and never commit `ProjectSettings.asset` with them in. A one-headset Quest test with `VRZ_SOLO_TEST` covers everything except what needs two screens (spectator, PARTNER score, "PARTNER LEFT"). Note that with it, two players in the same room start the match as soon as *one* finishes the tutorial.
 
