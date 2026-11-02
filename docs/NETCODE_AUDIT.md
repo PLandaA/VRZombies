@@ -1,0 +1,7 @@
+# Netcode Audit (September 2026)
+
+Every networked system (15 of them: session, lobby, maps, player state, avatar, rifle, magazines, impacts, weapon return, grenades, waves, zombies, score, game over, presentation readers) was inventoried and analysed one at a time against the same template: what it does on the wire and who holds authority, which decisions were deliberate vs. untouched Fusion defaults, the alternatives Fusion 2 offers, where it breaks (latency, packet loss, authority changes in flight, the authority disconnecting), what is actually measured vs. assumed, and what would break first at 5x the players. Claims about Fusion defaults were checked against the SDK source or the compiled IL rather than remembered.
+
+Fixes were then prioritised with one rule -- *does it break the two-player experience on Quest?* -- and every one was verified in two-build sessions before moving on. The blockers it found: the game could not be replayed without restarting the app, random matchmaking put strangers in the same room, test values left in the scenes (`maxHealth = 10000`, one-player gates) meant the damage/death/game-over flow had never actually run, and a host leaving froze the arena with invulnerable zombies. Development builds with `VRZ_NET_DIAGNOSTICS` log the numbers that guided the decisions (spawn cost, per-zombie path state, held-weapon authority, snap-turn hand error).
+
+The resulting ownership map and the full inventory of replicated state vs RPCs live in the [README](../README.md#architecture-fusion-2-shared-mode).
