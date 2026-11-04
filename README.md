@@ -4,6 +4,8 @@
 
 **Early Access on the Meta Horizon Store** → [store page](https://www.meta.com/experiences/vr-survival-zombies/1310775452126168/) (trailer and screenshots there)
 
+![Co-op reload: eject the magazine, grab a fresh one, rack the slide](docs/media/coop-reload.gif)
+
 - **Authority-on-approach weapons**: a rifle changes owner while the arm is still reaching for it, so the first grab never feels heavy.
 - **3 RPCs in the whole game**; everything else is replicated state, so late observers, pooled respawns and the offline Solo runner need no special cases.
 - **30 → 72 fps on Quest 3S**, one change per measurement, GPU 95% → 80-85%.
@@ -125,6 +127,8 @@ The rule: **state that must be true for anyone who looks later is `[Networked]`;
 | `AmbiencePlayer` (master, scene) | `ClipIndex` | none | One random pick per match, heard by both players |
 
 Three RPCs in the whole game, all of them damage or impact events. Everything else is state, which is what makes late observers, pooled respawns and the Solo runner work without special cases. The full audit of the 15 networked systems is in [docs/NETCODE_AUDIT.md](docs/NETCODE_AUDIT.md); the reasoning behind the code's shape in [docs/DESIGN_DECISIONS.md](docs/DESIGN_DECISIONS.md).
+
+Shared authority is the right fit for a two-player co-op game with physics hands: the holder of an object is the only one who needs its truth, and nobody profits from cheating a friend. For the server-authoritative counterpart, where the server owns every object and clients predict, reconcile and interpolate, see my [unity-server-authoritative-netcode](https://github.com/PLandaA/unity-server-authoritative-netcode) prototype, built from scratch to work through exactly those three problems.
 
 ## Performance on Quest (measured)
 
